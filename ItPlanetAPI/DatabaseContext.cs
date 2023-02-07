@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI;
 
-public class MyDbContext : DbContext
+public class DatabaseContext : DbContext
 {
-    public MyDbContext (DbContextOptions options)
+    public DatabaseContext (DbContextOptions options)
         : base(options)
     {
     }

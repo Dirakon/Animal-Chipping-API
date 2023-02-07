@@ -1,4 +1,5 @@
 using ItPlanetAPI;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -10,17 +11,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddAuthentication("BasicAuthentication")
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
 builder.Services.AddSwaggerGen(option =>
 {
     option.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
-    option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    option.AddSecurityDefinition("basic", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
-        Description = "Please enter a valid token",
+        Description = "Basic HTTP Authentication",
         Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Type = SecuritySchemeType.Http,
+        Scheme = "basic"
     });
     option.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -30,10 +33,10 @@ builder.Services.AddSwaggerGen(option =>
                 Reference = new OpenApiReference
                 {
                     Type=ReferenceType.SecurityScheme,
-                    Id="Bearer"
+                    Id="basic"
                 }
             },
-            new string[]{}
+            Array.Empty<string>()
         }
     });
 });
@@ -41,16 +44,12 @@ builder.Services.AddSwaggerGen(option =>
 
 var conn = new SqliteConnection("DataSource=:memory:");
 conn.Open(); // open connection to use
-builder.Services.AddDbContext<MyDbContext>(options =>
+builder.Services.AddDbContext<DatabaseContext>(options =>
     {
         var Options = options.UseSqlite(conn).Options;
 
-        using (var ctx = new MyDbContext(Options))
-        {
-            ctx.Database.EnsureCreated();
-            ctx.Accounts.ToList();
-        }
-
+        using var ctx = new DatabaseContext(Options);
+        ctx.Database.EnsureCreated();
     }
 );
 
@@ -65,6 +64,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
