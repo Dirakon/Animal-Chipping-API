@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-
 namespace ItPlanetAPI;
 
 public class Account
@@ -27,10 +25,10 @@ public class AccountWithoutPassword
     public string LastName { get; set; }
     public string Email { get; set; }
     public int Id { get; set; }
-    
+
     public static AccountWithoutPassword From(Account account)
     {
-        return new AccountWithoutPassword()
+        return new AccountWithoutPassword
         {
             Email = account.Email,
             FirstName = account.FirstName,
