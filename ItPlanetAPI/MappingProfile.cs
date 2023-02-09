@@ -11,5 +11,6 @@ public class MappingProfile : Profile
         CreateMap<AccountRequest,Account>();
         CreateMap<AnimalTypeRequest,AnimalType>();
         CreateMap<AnimalRequest,Animal>();
+        CreateMap<AnimalLocationRequest,AnimalLocation>();
     }
 }

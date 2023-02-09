@@ -16,7 +16,7 @@ public class Animal
     // Non-settable in request body
     public int Id { get; set; }
     public string LifeStatus { get; set; } = "ALIVE";
-    public DateTime ChippingDateTime { get; set; }
+    public DateTime ChippingDateTime { get; set; } = DateTime.Now;
     public long[] VisitedLocations { get; set; } = Array.Empty<long>();
     public DateTime? DeathDateTime { get; set; } = null;
 
