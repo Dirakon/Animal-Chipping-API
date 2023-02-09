@@ -1,9 +1,13 @@
+using AutoMapper;
 using ItPlanetAPI;
+using ItPlanetAPI.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,12 +17,14 @@ builder.Services.AddControllers();
 builder.Services.AddAuthentication("BasicAuthentication")
     .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 builder.Services.AddScoped<AuthorizedUser>();
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(option =>
 {
     option.SwaggerDoc("v1", new OpenApiInfo {Title = "Demo API", Version = "v1"});
+    option.OperationFilter<OpenApiParameterIgnoreFilter>();
     option.AddSecurityDefinition("basic", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,

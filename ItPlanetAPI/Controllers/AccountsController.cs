@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using AutoMapper;
+using ItPlanetAPI.Models;
 using LanguageExt.SomeHelp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,29 +13,15 @@ namespace ItPlanetAPI.Controllers;
 [Route("[controller]")]
 public class AccountsController : ControllerBase
 {
+    private readonly IMapper _mapper;
     private readonly DatabaseContext _context;
     private readonly ILogger<AccountsController> _logger;
 
-    public AccountsController(ILogger<AccountsController> logger, DatabaseContext context)
+    public AccountsController(ILogger<AccountsController> logger, DatabaseContext context, IMapper mapper)
     {
         _logger = logger;
         _context = context;
-    }
-
-    private static bool IsAccountValid(Account account)
-    {
-        var allStringFields = new List<string> {account.Email, account.Password, account.FirstName, account.LastName};
-
-        var allFieldsNonEmpty = allStringFields
-            .Select(field => field.Trim())
-            .All(field => field != "");
-
-        return allFieldsNonEmpty && IsValidEmail(account.Email);
-    }
-
-    private static bool IsValidEmail(string source)
-    {
-        return new EmailAddressAttribute().IsValid(source);
+        _mapper = mapper;
     }
 
 
@@ -52,7 +40,7 @@ public class AccountsController : ControllerBase
                 .OrderBy(account => account.Id)
                 .Skip(searchParameters.from)
                 .Take(searchParameters.size)
-                .Select(account => account.GetWithoutPassword())
+                .Select(account => _mapper.Map<AccountDto>(account))
         );
     }
     [HttpGet("{id:int}")]
@@ -64,7 +52,7 @@ public class AccountsController : ControllerBase
         var accountSearchedFor = _context.Accounts.Find(user => user.Id == id);
 
         return accountSearchedFor.Match<IActionResult>(
-            account => Ok(account.GetWithoutPassword()),
+            account => Ok(_mapper.Map<AccountDto>(account)),
             NotFound("User with this id is not found")
         );
     }
@@ -72,9 +60,9 @@ public class AccountsController : ControllerBase
     [HttpPut("{id:int}")]
     [Authorize]
     [ServiceFilter(typeof(AuthorizedUser))]
-    public async Task<IActionResult> Put(int id, [FromBody] Account account,[FromServices] int authorizedUserId)
+    public async Task<IActionResult> Put(int id, [FromBody] AccountRequest accountRequest, [OpenApiParameterIgnore] int authorizedUserId)
     {
-        if (!IsAccountValid(account)) return BadRequest("Some field is invalid");
+        if (!accountRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
         if (id != authorizedUserId) return Forbid();
         
@@ -82,30 +70,28 @@ public class AccountsController : ControllerBase
         if (oldAccount == null)
             return Forbid();
         
-        var emailAlreadyPresent = _context.Accounts.Any(accountToCheck => accountToCheck.Email == account.Email && accountToCheck.Id != id);
+        var emailAlreadyPresent = _context.Accounts.Any(accountToCheck => accountToCheck.Email == accountRequest.Email && accountToCheck.Id != id);
         if (emailAlreadyPresent) return Conflict("Account with this e-mail already present");
 
-        oldAccount.Email = account.Email;
-        oldAccount.FirstName = account.FirstName;
-        oldAccount.LastName = account.LastName;
-        oldAccount.Password = account.Password;
+        _mapper.Map(source: accountRequest, destination: oldAccount);
         
         // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
         _context.SaveChangesAsync();
         
-        return Ok(oldAccount.GetWithoutPassword());
+        return Ok(_mapper.Map<AccountDto>(oldAccount));
 
     }
 
     [HttpPost("Registration")]
     [AllowAnonymousOnly]
-    public async Task<IActionResult> Registration([FromBody] Account account)
+    public async Task<IActionResult> Registration([FromBody] AccountRequest accountRequest)
     {
-        if (!IsAccountValid(account)) return BadRequest("Some field is invalid");
+        if (!accountRequest.IsValid()) return BadRequest("Some field is invalid");
 
-        var emailAlreadyPresent = _context.Accounts.Any(accountToCheck => accountToCheck.Email == account.Email);
+        var emailAlreadyPresent = _context.Accounts.Any(accountToCheck => accountToCheck.Email == accountRequest.Email);
         if (emailAlreadyPresent) return Conflict("Account with this e-mail already present");
 
+        var account = _mapper.Map<Account>(accountRequest);
         if (!_context.Accounts.Any())
             account.Id = 1;
         else
@@ -115,7 +101,7 @@ public class AccountsController : ControllerBase
         // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
         _context.SaveChangesAsync();
 
-        return Ok(account.GetWithoutPassword());
+        return Ok(_mapper.Map<AccountDto>(account));
     }
 }
 

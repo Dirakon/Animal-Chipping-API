@@ -3,6 +3,7 @@ using System.Diagnostics.Contracts;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using ItPlanetAPI.Models;
 using LanguageExt;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
@@ -59,19 +60,19 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
         var encoding = Encoding.GetEncoding("iso-8859-1");
         
         var length = GetBase64BufferLength(encodedUsernamePassword);
-        var buffer = ArrayPool<byte>.Shared.Rent(length);
+        var buffer = new byte[length];
         
         if (!Convert.TryFromBase64String(encodedUsernamePassword, buffer, out _))
             return Option<(string email, string password)>.None;
-
-        var usernamePassword = encoding.GetString(buffer);
-        ArrayPool<byte>.Shared.Return(buffer);
         
-        var colonIndex = usernamePassword.IndexOf(':');
+
+        var emailPassword = encoding.GetString(buffer);
+        
+        var colonIndex = emailPassword.IndexOf(':');
         if (colonIndex < 0) return Option<(string email, string password)>.None;
 
-        var email = usernamePassword[..colonIndex];
-        var password = usernamePassword[(colonIndex + 1)..];
+        var email = emailPassword[..colonIndex];
+        var password = emailPassword[(colonIndex + 1)..];
         return (email, password);
     }
 

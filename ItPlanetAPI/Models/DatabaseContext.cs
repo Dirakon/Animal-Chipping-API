@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace ItPlanetAPI;
+namespace ItPlanetAPI.Models;
 
 public class DatabaseContext : DbContext
 {
