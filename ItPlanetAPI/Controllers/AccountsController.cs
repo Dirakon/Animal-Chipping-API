@@ -1,10 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using AutoMapper;
 using ItPlanetAPI.Models;
-using LanguageExt.SomeHelp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Controllers;
@@ -13,9 +10,9 @@ namespace ItPlanetAPI.Controllers;
 [Route("[controller]")]
 public class AccountsController : ControllerBase
 {
-    private readonly IMapper _mapper;
     private readonly DatabaseContext _context;
     private readonly ILogger<AccountsController> _logger;
+    private readonly IMapper _mapper;
 
     public AccountsController(ILogger<AccountsController> logger, DatabaseContext context, IMapper mapper)
     {
@@ -43,6 +40,7 @@ public class AccountsController : ControllerBase
                 .Select(account => _mapper.Map<AccountDto>(account))
         );
     }
+
     [HttpGet("{id:int}")]
     [ForbidOnIncorrectAuthorizationHeader]
     public IActionResult Get(int id)
@@ -56,30 +54,31 @@ public class AccountsController : ControllerBase
             NotFound("User with this id is not found")
         );
     }
-    
+
     [HttpPut("{id:int}")]
     [Authorize]
     [ServiceFilter(typeof(AuthorizedUser))]
-    public async Task<IActionResult> Put(int id, [FromBody] AccountRequest accountRequest, [OpenApiParameterIgnore] int authorizedUserId)
+    public async Task<IActionResult> Put(int id, [FromBody] AccountRequest accountRequest,
+        [OpenApiParameterIgnore] int authorizedUserId)
     {
         if (!accountRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
         if (id != authorizedUserId) return Forbid();
-        
+
         var oldAccount = await _context.Accounts.SingleOrDefaultAsync(user => user.Id == id);
         if (oldAccount == null)
             return Forbid();
-        
-        var emailAlreadyPresent = _context.Accounts.Any(accountToCheck => accountToCheck.Email == accountRequest.Email && accountToCheck.Id != id);
+
+        var emailAlreadyPresent = _context.Accounts.Any(accountToCheck =>
+            accountToCheck.Email == accountRequest.Email && accountToCheck.Id != id);
         if (emailAlreadyPresent) return Conflict("Account with this e-mail already present");
 
-        _mapper.Map(source: accountRequest, destination: oldAccount);
-        
+        _mapper.Map(accountRequest, oldAccount);
+
         // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
         _context.SaveChangesAsync();
-        
-        return Ok(_mapper.Map<AccountDto>(oldAccount));
 
+        return Ok(_mapper.Map<AccountDto>(oldAccount));
     }
 
     [HttpPost("Registration")]
@@ -102,6 +101,31 @@ public class AccountsController : ControllerBase
         _context.SaveChangesAsync();
 
         return Ok(_mapper.Map<AccountDto>(account));
+    }
+
+    [HttpDelete("{id:int}")]
+    [Authorize]
+    [ServiceFilter(typeof(AuthorizedUser))]
+    public async Task<IActionResult> Delete(int id,
+        [OpenApiParameterIgnore] int authorizedUserId)
+    {
+        if (id <= 0) return BadRequest("Id must be positive");
+        if (id != authorizedUserId) return Forbid();
+
+        var accountToRemove =
+            await _context.Accounts.SingleOrDefaultAsync(account => account.Id == id);
+        if (accountToRemove == null)
+            return Forbid();
+
+        var connectedToAnimals = accountToRemove.ChippedAnimals.Any();
+        if (connectedToAnimals) return BadRequest("Animal connected with this account is present");
+
+        _context.Accounts.Remove(accountToRemove);
+
+        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
+        _context.SaveChangesAsync();
+
+        return Ok();
     }
 }
 

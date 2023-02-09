@@ -1,13 +1,9 @@
-using AutoMapper;
 using ItPlanetAPI;
 using ItPlanetAPI.Models;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-
-
 
 var builder = WebApplication.CreateBuilder(args);
 

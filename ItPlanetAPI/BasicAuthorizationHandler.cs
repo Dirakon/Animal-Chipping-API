@@ -1,4 +1,3 @@
-using System.Buffers;
 using System.Diagnostics.Contracts;
 using System.Security.Claims;
 using System.Text;
@@ -58,16 +57,16 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
 
         var encodedUsernamePassword = authorization["Basic ".Length..].Trim();
         var encoding = Encoding.GetEncoding("iso-8859-1");
-        
+
         var length = GetBase64BufferLength(encodedUsernamePassword);
         var buffer = new byte[length];
-        
+
         if (!Convert.TryFromBase64String(encodedUsernamePassword, buffer, out _))
             return Option<(string email, string password)>.None;
-        
+
 
         var emailPassword = encoding.GetString(buffer);
-        
+
         var colonIndex = emailPassword.IndexOf(':');
         if (colonIndex < 0) return Option<(string email, string password)>.None;
 
@@ -80,8 +79,8 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
     private static int GetBase64BufferLength(string encodedString)
     {
         return (encodedString.Length * 3 + 3) / 4 -
-               (encodedString.Length > 0 && encodedString[^1] == '=' ?
-                   encodedString.Length > 1 && encodedString[^2] == '=' ?
-                       2 : 1 : 0);
+               (encodedString.Length > 0 && encodedString[^1] == '='
+                   ? encodedString.Length > 1 && encodedString[^2] == '=' ? 2 : 1
+                   : 0);
     }
 }

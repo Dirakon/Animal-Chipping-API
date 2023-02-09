@@ -12,13 +12,14 @@ public static class ControllerExtensions
     {
         return controller.HttpContext.GetAuthenticatedUserId();
     }
+
     public static async Task<Account?> GetAuthenticatedAccount(this ControllerBase controller, DatabaseContext context)
     {
         return await controller.GetAuthenticatedUserId().Match(
-            Some: async id => await context.Accounts.SingleOrDefaultAsync(u =>
+            async id => await context.Accounts.SingleOrDefaultAsync(u =>
                 u.Id == id),
-            None:Task.FromResult((Account?)null)
-            );
+            Task.FromResult((Account?) null)
+        );
     }
 
 
