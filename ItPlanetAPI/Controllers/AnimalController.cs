@@ -25,35 +25,35 @@ public class AnimalController : ControllerBase
 
     [HttpGet("Search")]
     [ForbidOnIncorrectAuthorizationHeader]
-    public IActionResult Search([FromQuery] AnimalSearchParameters searchParameters)
+    public IActionResult SearchAnimals([FromQuery] AnimalSearchRequest searchRequest)
     {
-        if (searchParameters.From < 0 || searchParameters.Size <= 0 || searchParameters.ChipperId is <= 0 ||
-            searchParameters.ChippingLocationId is <= 0 ||
-            searchParameters.LifeStatus is not "ALIVE" and not "DEAD" and not null ||
-            searchParameters.Gender is not "MALE" and not "FEMALE" and not "OTHER" and not null) return StatusCode(400);
+        if (searchRequest.From < 0 || searchRequest.Size <= 0 || searchRequest.ChipperId is <= 0 ||
+            searchRequest.ChippingLocationId is <= 0 ||
+            searchRequest.LifeStatus is not "ALIVE" and not "DEAD" and not null ||
+            searchRequest.Gender is not "MALE" and not "FEMALE" and not "OTHER" and not null) return StatusCode(400);
         var query = _context
             .Animals
             .Where(animal =>
-                animal.ChippingDateTime >= searchParameters.StartDateTime
-                && animal.ChippingDateTime <= searchParameters.EndDateTime
+                animal.ChippingDateTime >= searchRequest.StartDateTime
+                && animal.ChippingDateTime <= searchRequest.EndDateTime
             );
-        if (searchParameters.ChipperId != null)
-            query = query.Where(animal => animal.ChipperId == searchParameters.ChipperId);
+        if (searchRequest.ChipperId != null)
+            query = query.Where(animal => animal.ChipperId == searchRequest.ChipperId);
 
-        if (searchParameters.ChippingLocationId != null)
-            query = query.Where(animal => animal.ChippingLocationId == searchParameters.ChippingLocationId);
+        if (searchRequest.ChippingLocationId != null)
+            query = query.Where(animal => animal.ChippingLocationId == searchRequest.ChippingLocationId);
 
-        if (searchParameters.Gender != null) query = query.Where(animal => animal.Gender == searchParameters.Gender);
+        if (searchRequest.Gender != null) query = query.Where(animal => animal.Gender == searchRequest.Gender);
 
-        if (searchParameters.LifeStatus != null)
-            query = query.Where(animal => animal.LifeStatus == searchParameters.LifeStatus);
+        if (searchRequest.LifeStatus != null)
+            query = query.Where(animal => animal.LifeStatus == searchRequest.LifeStatus);
 
-        return Ok(query.OrderBy(animal => animal.Id).Skip(searchParameters.From).Take(searchParameters.Size));
+        return Ok(query.OrderBy(animal => animal.Id).Skip(searchRequest.From).Take(searchRequest.Size));
     }
 
     [HttpGet("{id:long}")]
     [ForbidOnIncorrectAuthorizationHeader]
-    public IActionResult Get(long id)
+    public IActionResult GetAnimal(long id)
     {
         if (id <= 0) return BadRequest("Id must be positive");
 
@@ -67,7 +67,7 @@ public class AnimalController : ControllerBase
 
     [HttpPut("{id:long}")]
     [Authorize]
-    public async Task<IActionResult> Put(long id, [FromBody] AnimalUpdateRequest animalRequest)
+    public async Task<IActionResult> UpdateAnimal(long id, [FromBody] AnimalUpdateRequest animalRequest)
     {
         if (!animalRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
@@ -91,7 +91,7 @@ public class AnimalController : ControllerBase
 
     [HttpPost("")]
     [Authorize]
-    public async Task<IActionResult> Post([FromBody] AnimalCreationRequest animalRequest)
+    public async Task<IActionResult> CreateAnimal([FromBody] AnimalCreationRequest animalRequest)
     {
         if (!animalRequest.IsValid()) return BadRequest("Some field is invalid");
         if (animalRequest.HasConflicts()) return Conflict();
@@ -111,16 +111,158 @@ public class AnimalController : ControllerBase
     }
 
     // TODO: delete and animal-specific methods
-}
+    
+    
 
-public class AnimalSearchParameters
-{
-    public DateTime? StartDateTime { get; set; } = DateTime.MinValue;
-    public DateTime? EndDateTime { get; set; } = DateTime.MaxValue;
-    public int? ChipperId { get; set; }
-    public long? ChippingLocationId { get; set; }
-    public string? LifeStatus { get; set; }
-    public string? Gender { get; set; }
-    public int From { get; set; } = 0;
-    public int Size { get; set; } = 10;
+    [HttpPost("{animalId:long}/types/{typeId:long}")]
+    [Authorize]
+    public async Task<IActionResult> AddType(long typeId, long animalId)
+    {
+        if (typeId <= 0 || animalId <= 0)
+            return BadRequest("Id must be positive");
+        var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
+        if (animal == null)
+        {
+            return NotFound("Animal not found");
+        }
+
+        if (animal.AnimalTypes.Any(animalType => animalType.TypeId == typeId))
+        {
+            return Conflict("Animal type already present");
+        }
+
+        var newType = _context.AnimalTypes.SingleOrDefault(type => type.Id == typeId);
+        if (newType == null)
+        {
+            return NotFound("Type not found");
+        }
+
+        var newRelationship = new AnimalAndTypeRelationship()
+            {Animal = animal, AnimalId = animalId, Type = newType, TypeId = typeId};
+        animal.AnimalTypes.Add(newRelationship);
+        newType.Animals.Add(newRelationship);
+
+        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
+        _context.SaveChangesAsync();
+
+
+        return Ok(_mapper.Map<AnimalDto>(animal));
+
+    }
+    
+    [HttpPut("{animalId:long}/types")]
+    [Authorize]
+    public async Task<IActionResult> UpdateType(long animalId, [FromBody] AnimalTypeUpdateRequest updateRequest)
+    {
+        if (updateRequest.OldTypeId <= 0 || updateRequest.NewTypeId <= 0 || animalId <= 0)
+            return BadRequest("Id must be positive");
+        var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
+        if (animal == null)
+        {
+            return NotFound("Animal not found");
+        }
+
+        var oldTypeRelationship = animal.AnimalTypes.SingleOrDefault(type => type.TypeId == updateRequest.OldTypeId);
+        if (oldTypeRelationship == null)
+        {
+            return NotFound("Old type is not present on animal");
+        }
+
+        if (animal.AnimalTypes.Any(type => type.TypeId == updateRequest.NewTypeId))
+        {
+            return Conflict("Animal already has the new type");
+        }
+
+        var newType = _context.AnimalTypes.SingleOrDefault(animalType => animalType.Id == updateRequest.NewTypeId);
+        if (newType == null)
+        {
+            return NotFound("New type cannot be found in the database");
+        }
+        
+        var oldType = oldTypeRelationship.Type;
+        oldType.Animals.Remove(oldTypeRelationship);
+        
+        oldTypeRelationship.TypeId = updateRequest.NewTypeId;
+        oldTypeRelationship.Type = newType;
+
+
+        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
+        _context.SaveChangesAsync();
+
+
+        return Ok(_mapper.Map<AnimalDto>(animal));
+
+    }
+    
+    [HttpDelete("{animalId:long}/types/{typeId:long}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteType(long animalId,  long typeId)
+    {
+        if (typeId <= 0 || animalId <= 0)
+            return BadRequest("Id must be positive");
+        var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
+        if (animal == null)
+        {
+            return NotFound("Animal not found");
+        }
+
+        var typeRelationship = animal.AnimalTypes.SingleOrDefault(type => type.TypeId == typeId);
+        if (typeRelationship == null)
+        {
+            return NotFound("The type is not present on animal");
+        }
+
+        if (animal.AnimalTypes.Count == 1)
+        {
+            return BadRequest("The type is the only type the animal has.");
+        }
+        
+        var oldType = typeRelationship.Type;
+        oldType.Animals.Remove(typeRelationship);
+        animal.AnimalTypes.Remove(typeRelationship);
+
+
+        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
+        _context.SaveChangesAsync();
+
+
+        return Ok(_mapper.Map<AnimalDto>(animal));
+        
+    }
+    
+    [HttpPost("{animalId:long}/locations/{pointId:long}")]
+    [Authorize]
+    public async Task<IActionResult> AddLocation(long animalId, long pointId)
+    {
+        if (pointId <= 0 || animalId <= 0)
+            return BadRequest("Id must be positive");
+        var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
+        if (animal == null)
+        {
+            return NotFound("Animal not found");
+        }
+
+        var typeRelationship = animal.AnimalTypes.SingleOrDefault(type => type.TypeId == typeId);
+        if (typeRelationship == null)
+        {
+            return NotFound("The type is not present on animal");
+        }
+
+        if (animal.AnimalTypes.Count == 1)
+        {
+            return BadRequest("The type is the only type the animal has.");
+        }
+        
+        var oldType = typeRelationship.Type;
+        oldType.Animals.Remove(typeRelationship);
+        animal.AnimalTypes.Remove(typeRelationship);
+
+
+        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
+        _context.SaveChangesAsync();
+
+
+        return Ok(_mapper.Map<AnimalDto>(animal));
+
+    }
 }

@@ -24,19 +24,19 @@ public class AccountsController : ControllerBase
 
     [HttpGet("Search")]
     [ForbidOnIncorrectAuthorizationHeader]
-    public IActionResult Search([FromQuery] UserSearchParameters searchParameters)
+    public IActionResult Search([FromQuery] AccountSearchRequest searchRequest)
     {
-        if (searchParameters.From < 0 || searchParameters.Size <= 0) return StatusCode(400);
+        if (searchRequest.From < 0 || searchRequest.Size <= 0) return StatusCode(400);
         return Ok(
             _context.Accounts
                 .Where(account =>
-                    account.Email.Contains(searchParameters.EmailName) &&
-                    account.FirstName.Contains(searchParameters.FirstName) &&
-                    account.LastName.Contains(searchParameters.LastName)
+                    account.Email.Contains(searchRequest.EmailName) &&
+                    account.FirstName.Contains(searchRequest.FirstName) &&
+                    account.LastName.Contains(searchRequest.LastName)
                 )
                 .OrderBy(account => account.Id)
-                .Skip(searchParameters.From)
-                .Take(searchParameters.Size)
+                .Skip(searchRequest.From)
+                .Take(searchRequest.Size)
                 .Select(account => _mapper.Map<AccountDto>(account))
         );
     }
@@ -58,10 +58,10 @@ public class AccountsController : ControllerBase
     [HttpPut("{id:int}")]
     [Authorize]
     [ServiceFilter(typeof(AuthorizedUser))]
-    public async Task<IActionResult> Put(int id, [FromBody] AccountRequest accountRequest,
+    public async Task<IActionResult> Update(int id, [FromBody] AccountCreationRequest accountCreationRequest,
         [OpenApiParameterIgnore] int authorizedUserId)
     {
-        if (!accountRequest.IsValid()) return BadRequest("Some field is invalid");
+        if (!accountCreationRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
         if (id != authorizedUserId) return Forbid();
 
@@ -70,10 +70,10 @@ public class AccountsController : ControllerBase
             return Forbid();
 
         var emailAlreadyPresent = _context.Accounts.Any(accountToCheck =>
-            accountToCheck.Email == accountRequest.Email && accountToCheck.Id != id);
+            accountToCheck.Email == accountCreationRequest.Email && accountToCheck.Id != id);
         if (emailAlreadyPresent) return Conflict("Account with this e-mail already present");
 
-        _mapper.Map(accountRequest, oldAccount);
+        _mapper.Map(accountCreationRequest, oldAccount);
 
         // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
         _context.SaveChangesAsync();
@@ -83,14 +83,14 @@ public class AccountsController : ControllerBase
 
     [HttpPost("Registration")]
     [AllowAnonymousOnly]
-    public async Task<IActionResult> Registration([FromBody] AccountRequest accountRequest)
+    public async Task<IActionResult> Register([FromBody] AccountCreationRequest accountCreationRequest)
     {
-        if (!accountRequest.IsValid()) return BadRequest("Some field is invalid");
+        if (!accountCreationRequest.IsValid()) return BadRequest("Some field is invalid");
 
-        var emailAlreadyPresent = _context.Accounts.Any(accountToCheck => accountToCheck.Email == accountRequest.Email);
+        var emailAlreadyPresent = _context.Accounts.Any(accountToCheck => accountToCheck.Email == accountCreationRequest.Email);
         if (emailAlreadyPresent) return Conflict("Account with this e-mail already present");
 
-        var account = _mapper.Map<Account>(accountRequest);
+        var account = _mapper.Map<Account>(accountCreationRequest);
         if (!_context.Accounts.Any())
             account.Id = 1;
         else
@@ -127,13 +127,4 @@ public class AccountsController : ControllerBase
 
         return Ok();
     }
-}
-
-public class UserSearchParameters
-{
-    public string FirstName { get; set; } = "";
-    public string LastName { get; set; } = "";
-    public string EmailName { get; set; } = "";
-    public int From { get; set; } = 0;
-    public int Size { get; set; } = 10;
 }

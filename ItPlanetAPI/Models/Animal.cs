@@ -7,7 +7,7 @@ namespace ItPlanetAPI.Models;
 
 public class Animal
 {
-    public virtual ICollection<AnimalAndType> AnimalTypes { get; set; }
+    public virtual ICollection<AnimalAndTypeRelationship> AnimalTypes { get; set; }
     public float Weight { get; set; }
     public float Length { get; set; }
 
@@ -18,7 +18,7 @@ public class Animal
     public int ChipperId { get; set; }
     public virtual Account Chipper { get; set; }
     public long ChippingLocationId { get; set; }
-    public virtual AnimalLocation ChippingLocation { get; set; }
+    public virtual Location ChippingLocation { get; set; }
 
 
     public long Id { get; set; }
@@ -26,13 +26,13 @@ public class Animal
     // TODO: optimize into enum
     public string LifeStatus { get; set; } = "ALIVE";
     public DateTime ChippingDateTime { get; set; } = DateTime.Now;
-    public virtual ICollection<AnimalAndLocation> VisitedLocations { get; set; }
+    public virtual ICollection<AnimalAndLocationRelationship> VisitedLocations { get; set; }
     public DateTime? DeathDateTime { get; set; } = null;
 
     public Animal()
     {
-        VisitedLocations = new List<AnimalAndLocation>();
-        AnimalTypes = new List<AnimalAndType>();
+        VisitedLocations = new List<AnimalAndLocationRelationship>();
+        AnimalTypes = new List<AnimalAndTypeRelationship>();
     }
 
     public static async Task<Either<int, Animal>> From(AnimalCreationRequest request, IMapper mapper,
@@ -55,7 +55,7 @@ public class Animal
 
                     foreach (var animalType in typesToConnectTo)
                     {
-                        var newRelationship = new AnimalAndType {Animal = animal, Type = animalType};
+                        var newRelationship = new AnimalAndTypeRelationship {Animal = animal, Type = animalType};
                         animalType.Animals.Add(newRelationship);
                         animal.AnimalTypes.Add(newRelationship);
                     }
@@ -66,7 +66,7 @@ public class Animal
             .None(Either<int, Animal>.Left(404));
     }
 
-    private static async Task<Option<(Account chippingAccount, AnimalLocation chippingLocation, List<AnimalType>
+    private static async Task<Option<(Account chippingAccount, Location chippingLocation, List<AnimalType>
             typesToConnectTo)>>
         GetNeededEntities(DatabaseContext databaseContext, List<long>? animalTypes, long chippingLocationId, long chipperId)
     {
@@ -76,7 +76,7 @@ public class Animal
                 .ToListAsync();
         
         if (animalTypes != null && animalTypes.Count != typesToConnectTo.Count)
-            return Option<(Account, AnimalLocation, List<AnimalType>)>.None;
+            return Option<(Account, Location, List<AnimalType>)>.None;
 
         var chippingLocation =
             databaseContext.AnimalLocations.Find(location => location.Id == chippingLocationId);
@@ -87,12 +87,12 @@ public class Animal
                 var chippingAccount = databaseContext.Accounts.Find(account => account.Id == chipperId);
 
                 return chippingAccount.Match(
-                    chippingAccount => Option<(Account, AnimalLocation, List<AnimalType>)>.Some((chippingAccount,
+                    chippingAccount => Option<(Account, Location, List<AnimalType>)>.Some((chippingAccount,
                         chippingLocation, typesToConnectTo)),
-                    Option<(Account, AnimalLocation, List<AnimalType>)>.None
+                    Option<(Account, Location, List<AnimalType>)>.None
                 );
             },
-            Option<(Account, AnimalLocation, List<AnimalType>)>.None
+            Option<(Account, Location, List<AnimalType>)>.None
         );
     }
 
@@ -101,7 +101,7 @@ public class Animal
         
         if (LifeStatus ==  "DEAD" && request.LifeStatus == "ALIVE")
             return Either<int, Unit>.Left(400);
-        if (VisitedLocations.Any() && VisitedLocations.First().LocationId == request.ChippingLocationId)
+        if (VisitedLocations.Any() && VisitedLocations.First().LocationPointId == request.ChippingLocationId)
             return Either<int, Unit>.Left(400);
         
         return (await GetNeededEntities(databaseContext, animalTypes: null, chipperId: request.ChipperId, chippingLocationId: request.ChippingLocationId))
@@ -129,85 +129,4 @@ public class Animal
             )
             .None(Either<int, Unit>.Left(404));
     }
-}
-
-public class AnimalCreationRequest
-{
-    public List<long> AnimalTypes { get; set; }
-    public float Weight { get; set; }
-    public float Length { get; set; }
-    public float Height { get; set; }
-    public string Gender { get; set; }
-    public int ChipperId { get; set; }
-    public long ChippingLocationId { get; set; }
-
-    public bool IsValid()
-    {
-        if (!AnimalTypes.Any() || AnimalTypes.Any(animalType => animalType <= 0))
-                return false;
-
-        if (Weight <= 0 || Length <= 0 || Height <= 0 || Gender is not "MALE" and not "FEMALE" and not "OTHER" ||
-            ChipperId <= 0 || ChippingLocationId <= 0)
-            return false;
-        return true;
-    }
-
-    public bool HasConflicts()
-    {
-        return AnimalTypes.GroupBy(x => x).Any(g => g.Count() > 1);
-    }
-}
-public class AnimalUpdateRequest
-{
-    public float Weight { get; set; }
-    public float Length { get; set; }
-    public float Height { get; set; }
-    public string Gender { get; set; }
-    public int ChipperId { get; set; }
-    public long ChippingLocationId { get; set; }
-    public string LifeStatus { get; set; }
-
-    public bool IsValid()
-    {
-
-        if (Weight <= 0 || Length <= 0 || Height <= 0 || Gender is not "MALE" and not "FEMALE" and not "OTHER" ||
-            ChipperId <= 0 || ChippingLocationId <= 0 || LifeStatus is not "ALIVE" and not "DEAD")
-            return false;
-        return true;
-    }
-
-}
-
-public class AnimalDto
-{
-    public List<long> AnimalTypes { get; set; }
-    public float Weight { get; set; }
-    public float Length { get; set; }
-    public float Height { get; set; }
-    public string Gender { get; set; }
-    public int ChipperId { get; set; }
-    public long ChippingLocationId { get; set; }
-
-
-    public long Id { get; set; }
-    public string LifeStatus { get; set; }
-    public DateTime ChippingDateTime { get; set; }
-    public List<long> VisitedLocations { get; set; }
-    public DateTime? DeathDateTime { get; set; }
-}
-
-public class AnimalAndLocation
-{
-    public long AnimalId { get; set; }
-    public virtual Animal Animal { get; set; }
-    public long LocationId { get; set; }
-    public virtual AnimalLocation Location { get; set; }
-}
-
-public class AnimalAndType
-{
-    public long AnimalId { get; set; }
-    public virtual Animal Animal { get; set; }
-    public long TypeId { get; set; }
-    public virtual AnimalType Type { get; set; }
 }

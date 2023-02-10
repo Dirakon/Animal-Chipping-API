@@ -13,7 +13,7 @@ public class DatabaseContext : DbContext
     public DbSet<Account> Accounts { get; set; }
     public DbSet<AnimalType> AnimalTypes { get; set; }
     public DbSet<Animal> Animals { get; set; }
-    public DbSet<AnimalLocation> AnimalLocations { get; set; }
+    public DbSet<Location> AnimalLocations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,21 +36,21 @@ public class DatabaseContext : DbContext
         //     new Animal()
         //         {AnimalTypes = new List<long>{1,2}, ChipperId = 1, ChipperLocationId = 1, Gender = "Male", Height = 169,Length = 2, Weight = 2, Id = 1}
         // );
-        modelBuilder.Entity<AnimalLocation>().HasData(
-            new AnimalLocation {Id = 1, Longitude = 69, Latitude = 69},
-            new AnimalLocation {Id = 2, Longitude = -69, Latitude = -69}
+        modelBuilder.Entity<Location>().HasData(
+            new Location {Id = 1, Longitude = 69, Latitude = 69},
+            new Location {Id = 2, Longitude = -69, Latitude = -69}
         );
     }
 
     private static void InitAnimalAndLocationRelationship(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<AnimalAndLocation>()
-            .HasKey(ao => new {ao.AnimalId, ao.LocationId});
+        modelBuilder.Entity<AnimalAndLocationRelationship>()
+            .HasKey(ao => new {ao.AnimalId, LocationId = ao.LocationPointId});
 
-        modelBuilder.Entity<AnimalLocation>()
+        modelBuilder.Entity<Location>()
             .HasMany(ao => ao.AnimalsVisitedHere)
             .WithOne(a => a.Location)
-            .HasForeignKey(ao => ao.LocationId)
+            .HasForeignKey(ao => ao.LocationPointId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Animal>()
@@ -58,8 +58,7 @@ public class DatabaseContext : DbContext
             .WithOne(a => a.Animal)
             .HasForeignKey(ao => ao.AnimalId)
             .OnDelete(DeleteBehavior.Cascade);
-
-
+        
         modelBuilder.Entity<Animal>()
             .HasOne(ao => ao.ChippingLocation)
             .WithMany(a => a.AnimalsChippedHere)
@@ -69,7 +68,7 @@ public class DatabaseContext : DbContext
 
     private static void InitAnimalAndTypeRelationship(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<AnimalAndType>()
+        modelBuilder.Entity<AnimalAndTypeRelationship>()
             .HasKey(ao => new {ao.AnimalId, ao.TypeId});
 
         modelBuilder.Entity<AnimalType>()

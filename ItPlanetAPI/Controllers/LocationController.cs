@@ -31,16 +31,16 @@ public class AnimalLocationController : ControllerBase
         var animalLocationSearchedFor = _context.AnimalLocations.Find(animalLocation => animalLocation.Id == id);
 
         return animalLocationSearchedFor.Match<IActionResult>(
-            animalLocation => Ok(_mapper.Map<AnimalLocationDto>(animalLocation)),
+            animalLocation => Ok(_mapper.Map<LocationDto>(animalLocation)),
             NotFound("Location with this id is not found")
         );
     }
 
     [HttpPut("{id:long}")]
     [Authorize]
-    public async Task<IActionResult> Put(long id, [FromBody] AnimalLocationRequest animalLocationRequest)
+    public async Task<IActionResult> Put(long id, [FromBody] LocationRequest locationRequest)
     {
-        if (!animalLocationRequest.IsValid()) return BadRequest("Some field is invalid");
+        if (!locationRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
 
         var oldAnimalLocation =
@@ -49,32 +49,32 @@ public class AnimalLocationController : ControllerBase
             return NotFound();
 
         var coordinatesAlreadyPresent = _context.AnimalLocations.Any(locationToCheck =>
-            locationToCheck.Latitude.AlmostEqualTo(animalLocationRequest.Latitude) &&
-            locationToCheck.Longitude.AlmostEqualTo(animalLocationRequest.Longitude)
+            locationToCheck.Latitude.AlmostEqualTo(locationRequest.Latitude) &&
+            locationToCheck.Longitude.AlmostEqualTo(locationRequest.Longitude)
         );
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 
-        _mapper.Map(animalLocationRequest, oldAnimalLocation);
+        _mapper.Map(locationRequest, oldAnimalLocation);
 
         // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
         _context.SaveChangesAsync();
 
-        return Ok(_mapper.Map<AnimalLocationDto>(oldAnimalLocation));
+        return Ok(_mapper.Map<LocationDto>(oldAnimalLocation));
     }
 
     [HttpPost("")]
     [Authorize]
-    public async Task<IActionResult> Post([FromBody] AnimalLocationRequest animalLocationRequest)
+    public async Task<IActionResult> Post([FromBody] LocationRequest locationRequest)
     {
-        if (!animalLocationRequest.IsValid()) return BadRequest("Some field is invalid");
+        if (!locationRequest.IsValid()) return BadRequest("Some field is invalid");
 
         var coordinatesAlreadyPresent = _context.AnimalLocations.Any(locationToCheck =>
-            locationToCheck.Latitude.AlmostEqualTo(animalLocationRequest.Latitude) &&
-            locationToCheck.Longitude.AlmostEqualTo(animalLocationRequest.Longitude)
+            locationToCheck.Latitude.AlmostEqualTo(locationRequest.Latitude) &&
+            locationToCheck.Longitude.AlmostEqualTo(locationRequest.Longitude)
         );
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 
-        var animalLocation = _mapper.Map<AnimalLocation>(animalLocationRequest);
+        var animalLocation = _mapper.Map<Location>(locationRequest);
         if (!_context.AnimalLocations.Any())
             animalLocation.Id = 1;
         else
@@ -85,7 +85,7 @@ public class AnimalLocationController : ControllerBase
         // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
         _context.SaveChangesAsync();
 
-        return Ok(_mapper.Map<AnimalLocationDto>(animalLocation));
+        return Ok(_mapper.Map<LocationDto>(animalLocation));
     }
 
     [HttpDelete("{id:long}")]
