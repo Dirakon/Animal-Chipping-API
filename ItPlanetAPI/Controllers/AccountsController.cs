@@ -26,17 +26,17 @@ public class AccountsController : ControllerBase
     [ForbidOnIncorrectAuthorizationHeader]
     public IActionResult Search([FromQuery] UserSearchParameters searchParameters)
     {
-        if (searchParameters.from < 0 || searchParameters.size <= 0) return StatusCode(400);
+        if (searchParameters.From < 0 || searchParameters.Size <= 0) return StatusCode(400);
         return Ok(
             _context.Accounts
                 .Where(account =>
-                    account.Email.Contains(searchParameters.emailName) &&
-                    account.FirstName.Contains(searchParameters.firstName) &&
-                    account.LastName.Contains(searchParameters.lastName)
+                    account.Email.Contains(searchParameters.EmailName) &&
+                    account.FirstName.Contains(searchParameters.FirstName) &&
+                    account.LastName.Contains(searchParameters.LastName)
                 )
                 .OrderBy(account => account.Id)
-                .Skip(searchParameters.from)
-                .Take(searchParameters.size)
+                .Skip(searchParameters.From)
+                .Take(searchParameters.Size)
                 .Select(account => _mapper.Map<AccountDto>(account))
         );
     }
@@ -131,9 +131,9 @@ public class AccountsController : ControllerBase
 
 public class UserSearchParameters
 {
-    public string firstName { get; set; } = "";
-    public string lastName { get; set; } = "";
-    public string emailName { get; set; } = "";
-    public int from { get; set; } = 0;
-    public int size { get; set; } = 10;
+    public string FirstName { get; set; } = "";
+    public string LastName { get; set; } = "";
+    public string EmailName { get; set; } = "";
+    public int From { get; set; } = 0;
+    public int Size { get; set; } = 10;
 }

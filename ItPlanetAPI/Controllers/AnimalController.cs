@@ -27,28 +27,28 @@ public class AnimalController : ControllerBase
     [ForbidOnIncorrectAuthorizationHeader]
     public IActionResult Search([FromQuery] AnimalSearchParameters searchParameters)
     {
-        if (searchParameters.from < 0 || searchParameters.size <= 0 || searchParameters.chipperId <= 0 ||
-            searchParameters.chippingLocationId <= 0 ||
-            searchParameters.lifeStatus is not "ALIVE" and not "DEAD" ||
-            searchParameters.gender is not "MALE" and not "FEMALE" and not "OTHER") return StatusCode(400);
+        if (searchParameters.From < 0 || searchParameters.Size <= 0 || searchParameters.ChipperId is <= 0 ||
+            searchParameters.ChippingLocationId is <= 0 ||
+            searchParameters.LifeStatus is not "ALIVE" and not "DEAD" and not null ||
+            searchParameters.Gender is not "MALE" and not "FEMALE" and not "OTHER" and not null) return StatusCode(400);
         var query = _context
             .Animals
             .Where(animal =>
-                animal.ChippingDateTime >= searchParameters.startDateTime
-                && animal.ChippingDateTime <= searchParameters.endDateTime
+                animal.ChippingDateTime >= searchParameters.StartDateTime
+                && animal.ChippingDateTime <= searchParameters.EndDateTime
             );
-        if (searchParameters.chipperId != null)
-            query = query.Where(animal => animal.ChipperId == searchParameters.chipperId);
+        if (searchParameters.ChipperId != null)
+            query = query.Where(animal => animal.ChipperId == searchParameters.ChipperId);
 
-        if (searchParameters.chippingLocationId != null)
-            query = query.Where(animal => animal.ChippingLocationId == searchParameters.chippingLocationId);
+        if (searchParameters.ChippingLocationId != null)
+            query = query.Where(animal => animal.ChippingLocationId == searchParameters.ChippingLocationId);
 
-        if (searchParameters.gender != null) query = query.Where(animal => animal.Gender == searchParameters.gender);
+        if (searchParameters.Gender != null) query = query.Where(animal => animal.Gender == searchParameters.Gender);
 
-        if (searchParameters.lifeStatus != null)
-            query = query.Where(animal => animal.LifeStatus == searchParameters.lifeStatus);
+        if (searchParameters.LifeStatus != null)
+            query = query.Where(animal => animal.LifeStatus == searchParameters.LifeStatus);
 
-        return Ok(query.OrderBy(animal => animal.Id).Skip(searchParameters.from).Take(searchParameters.size));
+        return Ok(query.OrderBy(animal => animal.Id).Skip(searchParameters.From).Take(searchParameters.Size));
     }
 
     [HttpGet("{id:long}")]
@@ -67,33 +67,31 @@ public class AnimalController : ControllerBase
 
     [HttpPut("{id:long}")]
     [Authorize]
-    public async Task<IActionResult> Put(long id, [FromBody] AnimalLocationRequest animalLocationRequest)
+    public async Task<IActionResult> Put(long id, [FromBody] AnimalUpdateRequest animalRequest)
     {
-        if (!animalLocationRequest.IsValid()) return BadRequest("Some field is invalid");
+        if (!animalRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
 
-        var oldAnimalLocation =
-            await _context.AnimalLocations.SingleOrDefaultAsync(animalLocation => animalLocation.Id == id);
-        if (oldAnimalLocation == null)
+        var oldAnimal =
+            await _context.Animals.SingleOrDefaultAsync(animal => animal.Id == id);
+        if (oldAnimal == null)
             return NotFound();
 
-        var coordinatesAlreadyPresent = _context.AnimalLocations.Any(locationToCheck =>
-            locationToCheck.Latitude.AlmostEqualTo(animalLocationRequest.Latitude) &&
-            locationToCheck.Longitude.AlmostEqualTo(animalLocationRequest.Longitude)
+        return (await oldAnimal.TryTakeValuesOf(animalRequest, _mapper, _context)).Match<IActionResult>(
+            _ =>
+            {
+                // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
+                _context.SaveChangesAsync();
+
+                return Ok(_mapper.Map<AnimalDto>(oldAnimal));
+            },
+            errorCode => StatusCode(errorCode)
         );
-        if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
-
-        _mapper.Map(animalLocationRequest, oldAnimalLocation);
-
-        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-        _context.SaveChangesAsync();
-
-        return Ok(oldAnimalLocation);
     }
 
     [HttpPost("")]
     [Authorize]
-    public async Task<IActionResult> Post([FromBody] AnimalRequest animalRequest)
+    public async Task<IActionResult> Post([FromBody] AnimalCreationRequest animalRequest)
     {
         if (!animalRequest.IsValid()) return BadRequest("Some field is invalid");
         if (animalRequest.HasConflicts()) return Conflict();
@@ -117,12 +115,12 @@ public class AnimalController : ControllerBase
 
 public class AnimalSearchParameters
 {
-    public DateTime? startDateTime { get; set; } = DateTime.MinValue;
-    public DateTime? endDateTime { get; set; } = DateTime.MaxValue;
-    public int? chipperId { get; set; }
-    public long? chippingLocationId { get; set; }
-    public string? lifeStatus { get; set; }
-    public string? gender { get; set; }
-    public int from { get; set; } = 0;
-    public int size { get; set; } = 10;
+    public DateTime? StartDateTime { get; set; } = DateTime.MinValue;
+    public DateTime? EndDateTime { get; set; } = DateTime.MaxValue;
+    public int? ChipperId { get; set; }
+    public long? ChippingLocationId { get; set; }
+    public string? LifeStatus { get; set; }
+    public string? Gender { get; set; }
+    public int From { get; set; } = 0;
+    public int Size { get; set; } = 10;
 }

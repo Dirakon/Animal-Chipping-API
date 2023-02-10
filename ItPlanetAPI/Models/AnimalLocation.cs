@@ -7,6 +7,12 @@ public class AnimalLocation
     public long Id { get; set; }
     public virtual ICollection<AnimalAndLocation> AnimalsVisitedHere { get; set; }
     public virtual ICollection<Animal> AnimalsChippedHere { get; set; }
+
+    public AnimalLocation()
+    {
+        AnimalsChippedHere = new List<Animal>();
+        AnimalsVisitedHere = new List<AnimalAndLocation>();
+    }
 }
 
 public class AnimalLocationRequest

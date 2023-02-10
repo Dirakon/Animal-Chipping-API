@@ -20,8 +20,11 @@ public class MappingProfile : Profile
         CreateMap<AnimalLocation, AnimalLocationDto>();
 
         // Animal request -> animal -> animal DTO
-        CreateMap<AnimalRequest, Animal>()
-            .ForSourceMember(request => request.AnimalTypes, opt => opt.DoNotValidate());
-        CreateMap<Animal, AnimalDto>();
+        CreateMap<AnimalCreationRequest, Animal>()
+            .ForSourceMember(request => request.AnimalTypes, opt => opt.DoNotValidate())
+            .ForMember(animal=>animal.AnimalTypes,opt=>opt.Ignore());
+        CreateMap<AnimalUpdateRequest, Animal>();
+        CreateMap<Animal, AnimalDto>()
+            .ForMember(animalDto=>animalDto.AnimalTypes,opt=>opt.MapFrom(animal=>animal.AnimalTypes.Select(type=>type.TypeId)));
     }
 }

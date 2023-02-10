@@ -11,6 +11,10 @@ public class Account
     public int Id { get; set; }
     public virtual ICollection<Animal> ChippedAnimals { get; set; }
 
+    public Account()
+    {
+        ChippedAnimals = new List<Animal>();
+    }
 
     public override string ToString()
     {
