@@ -7,5 +7,5 @@ public class AnimalAndLocationRelationship
     public virtual Animal Animal { get; set; }
     public long LocationPointId { get; set; }
     public virtual Location Location { get; set; }
-    public DateTime DataTimeOfVisitLocationPoint { get; set; }
+    public DateTime DataTimeOfVisitLocationPoint { get; set; } = DateTime.Now;
 }

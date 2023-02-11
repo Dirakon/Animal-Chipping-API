@@ -28,7 +28,7 @@ public class AnimalLocationController : ControllerBase
     {
         if (id <= 0) return BadRequest("Id must be positive");
 
-        var animalLocationSearchedFor = _context.AnimalLocations.Find(animalLocation => animalLocation.Id == id);
+        var animalLocationSearchedFor = _context.Locations.Find(animalLocation => animalLocation.Id == id);
 
         return animalLocationSearchedFor.Match<IActionResult>(
             animalLocation => Ok(_mapper.Map<LocationDto>(animalLocation)),
@@ -44,11 +44,11 @@ public class AnimalLocationController : ControllerBase
         if (id <= 0) return BadRequest("Id must be positive");
 
         var oldAnimalLocation =
-            await _context.AnimalLocations.SingleOrDefaultAsync(animalLocation => animalLocation.Id == id);
+            await _context.Locations.SingleOrDefaultAsync(animalLocation => animalLocation.Id == id);
         if (oldAnimalLocation == null)
             return NotFound();
 
-        var coordinatesAlreadyPresent = _context.AnimalLocations.Any(locationToCheck =>
+        var coordinatesAlreadyPresent = _context.Locations.Any(locationToCheck =>
             locationToCheck.Latitude.AlmostEqualTo(locationRequest.Latitude) &&
             locationToCheck.Longitude.AlmostEqualTo(locationRequest.Longitude)
         );
@@ -56,8 +56,7 @@ public class AnimalLocationController : ControllerBase
 
         _mapper.Map(locationRequest, oldAnimalLocation);
 
-        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-        _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         return Ok(_mapper.Map<LocationDto>(oldAnimalLocation));
     }
@@ -68,22 +67,21 @@ public class AnimalLocationController : ControllerBase
     {
         if (!locationRequest.IsValid()) return BadRequest("Some field is invalid");
 
-        var coordinatesAlreadyPresent = _context.AnimalLocations.Any(locationToCheck =>
+        var coordinatesAlreadyPresent = _context.Locations.Any(locationToCheck =>
             locationToCheck.Latitude.AlmostEqualTo(locationRequest.Latitude) &&
             locationToCheck.Longitude.AlmostEqualTo(locationRequest.Longitude)
         );
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 
         var animalLocation = _mapper.Map<Location>(locationRequest);
-        if (!_context.AnimalLocations.Any())
+        if (!_context.Locations.Any())
             animalLocation.Id = 1;
         else
             animalLocation.Id =
-                await _context.AnimalLocations.Select(locationToCheck => locationToCheck.Id).MaxAsync() + 1;
+                await _context.Locations.Select(locationToCheck => locationToCheck.Id).MaxAsync() + 1;
 
-        _context.AnimalLocations.Add(animalLocation);
-        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-        _context.SaveChangesAsync();
+        _context.Locations.Add(animalLocation);
+        await _context.SaveChangesAsync();
 
         return Ok(_mapper.Map<LocationDto>(animalLocation));
     }
@@ -95,7 +93,7 @@ public class AnimalLocationController : ControllerBase
         if (id <= 0) return BadRequest("Id must be positive");
 
         var oldAnimalLocation =
-            await _context.AnimalLocations.SingleOrDefaultAsync(animalLocation => animalLocation.Id == id);
+            await _context.Locations.SingleOrDefaultAsync(animalLocation => animalLocation.Id == id);
         if (oldAnimalLocation == null)
             return NotFound();
 
@@ -103,10 +101,9 @@ public class AnimalLocationController : ControllerBase
             oldAnimalLocation.AnimalsChippedHere.Any() || oldAnimalLocation.AnimalsVisitedHere.Any();
         if (locationIsPresentInAnimals) return BadRequest("Animal connected with this location is present");
 
-        _context.AnimalLocations.Remove(oldAnimalLocation);
+        _context.Locations.Remove(oldAnimalLocation);
 
-        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-        _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         return Ok();
     }

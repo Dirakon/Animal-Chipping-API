@@ -53,8 +53,7 @@ public class AnimalTypeController : ControllerBase
 
         _mapper.Map(animalTypeRequest, oldAnimalType);
 
-        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-        _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         return Ok(_mapper.Map<AnimalTypeDto>(oldAnimalType));
     }
@@ -75,8 +74,7 @@ public class AnimalTypeController : ControllerBase
             animalType.Id = await _context.AnimalTypes.Select(typeToCheck => typeToCheck.Id).MaxAsync() + 1;
 
         _context.AnimalTypes.Add(animalType);
-        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-        _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         return Ok(_mapper.Map<AnimalTypeDto>(animalType));
     }
@@ -96,8 +94,7 @@ public class AnimalTypeController : ControllerBase
 
         _context.AnimalTypes.Remove(oldAnimalType);
 
-        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-        _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         return Ok();
     }

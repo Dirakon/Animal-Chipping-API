@@ -79,7 +79,7 @@ public class Animal
             return Option<(Account, Location, List<AnimalType>)>.None;
 
         var chippingLocation =
-            databaseContext.AnimalLocations.Find(location => location.Id == chippingLocationId);
+            databaseContext.Locations.Find(location => location.Id == chippingLocationId);
 
         return chippingLocation.Match(
             chippingLocation =>

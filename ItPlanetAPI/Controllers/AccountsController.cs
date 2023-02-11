@@ -75,8 +75,7 @@ public class AccountsController : ControllerBase
 
         _mapper.Map(accountCreationRequest, oldAccount);
 
-        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-        _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         return Ok(_mapper.Map<AccountDto>(oldAccount));
     }
@@ -97,8 +96,7 @@ public class AccountsController : ControllerBase
             account.Id = await _context.Accounts.Select(acc => acc.Id).MaxAsync() + 1;
 
         _context.Accounts.Add(account);
-        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-        _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         return Ok(_mapper.Map<AccountDto>(account));
     }
@@ -122,8 +120,7 @@ public class AccountsController : ControllerBase
 
         _context.Accounts.Remove(accountToRemove);
 
-        // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-        _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         return Ok();
     }
