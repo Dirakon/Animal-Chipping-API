@@ -24,9 +24,11 @@ public class AuthorizedUser : IActionFilter
      */
     private int GetUserIdFromContext(HttpContext httpContext)
     {
-        return httpContext.GetAuthenticatedUserId()
-            .Some(id => id)
-            .None(() => throw new ValidationException(
-                "The methods has been authorized, but the user ID can't be found!"));
+        return httpContext.GetAuthenticatedUserId() switch
+        {
+            { } id => id,
+            null => throw new ValidationException(
+                "The methods is assumed to be authorized, but the user ID can't be found!")
+        };
     }
 }

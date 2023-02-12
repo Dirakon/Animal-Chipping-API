@@ -43,16 +43,16 @@ public class AccountsController : ControllerBase
 
     [HttpGet("{id:int}")]
     [ForbidOnIncorrectAuthorizationHeader]
-    public IActionResult Get(int id)
+    public async Task<IActionResult>Get(int id)
     {
         if (id <= 0) return BadRequest("Id must be positive");
 
-        var accountSearchedFor = _context.Accounts.Find(user => user.Id == id);
+        var accountSearchedFor = await _context.Accounts.FirstOrDefaultAsync(user => user.Id == id);
 
-        return accountSearchedFor.Match<IActionResult>(
-            account => Ok(_mapper.Map<AccountDto>(account)),
-            NotFound("User with this id is not found")
-        );
+        return accountSearchedFor switch{
+            {} account => Ok(_mapper.Map<AccountDto>(account)),
+            null => NotFound("User with this id is not found")
+        };
     }
 
     [HttpPut("{id:int}")]
@@ -86,7 +86,8 @@ public class AccountsController : ControllerBase
     {
         if (!accountCreationRequest.IsValid()) return BadRequest("Some field is invalid");
 
-        var emailAlreadyPresent = _context.Accounts.Any(accountToCheck => accountToCheck.Email == accountCreationRequest.Email);
+        var emailAlreadyPresent =
+            _context.Accounts.Any(accountToCheck => accountToCheck.Email == accountCreationRequest.Email);
         if (emailAlreadyPresent) return Conflict("Account with this e-mail already present");
 
         var account = _mapper.Map<Account>(accountCreationRequest);

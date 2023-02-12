@@ -8,4 +8,13 @@ public class AnimalAndLocationRelationship
     public long LocationPointId { get; set; }
     public virtual Location Location { get; set; }
     public DateTime DataTimeOfVisitLocationPoint { get; set; } = DateTime.Now;
+
+    public void ChangeLocationTo(Location newLocation)
+    {
+        Location.AnimalsVisitedHere.Remove(this);
+
+        LocationPointId = newLocation.Id;
+        Location = newLocation;
+        Location.AnimalsVisitedHere.Add(this);
+    }
 }

@@ -24,16 +24,16 @@ public class AnimalTypeController : ControllerBase
 
     [HttpGet("{id:long}")]
     [ForbidOnIncorrectAuthorizationHeader]
-    public IActionResult Get(long id)
+    public async Task<IActionResult> Get(long id)
     {
         if (id <= 0) return BadRequest("Id must be positive");
 
-        var animalTypeSearchedFor = _context.AnimalTypes.Find(animalType => animalType.Id == id);
+        var animalTypeSearchedFor = await _context.AnimalTypes.FirstOrDefaultAsync(animalType => animalType.Id == id);
 
-        return animalTypeSearchedFor.Match<IActionResult>(
-            animalType => Ok(_mapper.Map<AnimalTypeDto>(animalType)),
-            NotFound("Animal type with this id is not found")
-        );
+        return animalTypeSearchedFor switch{
+            {} animalType => Ok(_mapper.Map<AnimalTypeDto>(animalType)),
+            null => NotFound("Animal type with this id is not found")
+        };
     }
 
     [HttpPut("{id:long}")]

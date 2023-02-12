@@ -9,7 +9,7 @@ public class ForbidOnIncorrectAuthorizationHeader : Attribute, IAuthorizationFil
     public void OnAuthorization(AuthorizationFilterContext context)
     {
         if (context.HttpContext.Request.Headers.ContainsKey("Authorization") &&
-            context.HttpContext.GetAuthenticatedUserId().IsNone)
+            context.HttpContext.GetAuthenticatedUserId() is null)
             context.Result = new UnauthorizedResult();
     }
 }

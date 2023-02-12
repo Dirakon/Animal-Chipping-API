@@ -1,39 +1,47 @@
-using LanguageExt;
-
 namespace ItPlanetAPI.Extensions;
 
 public static class LinqExtensions
 {
-    public static Option<(Option<T>, T, Option<T>)> FindWithNextAndPrevious<T>
+    public static (T? Previous, T Current, T? Next)? FindWithNextAndPrevious<T>
         (this IEnumerable<T> source, Predicate<T> filteringFunction)
     {
-        using IEnumerator<T> iterator = source.GetEnumerator();
-        if (!iterator.MoveNext())
-        {
-            return Option<(Option<T>, T, Option<T>)>.None;
-        }
+        using var iterator = source.GetEnumerator();
+        if (!iterator.MoveNext()) return null;
 
-        T previous = iterator.Current;
+        var previous = iterator.Current;
         if (filteringFunction(previous))
         {
-            T current = previous;
-            Option<T> next = iterator.MoveNext() ? iterator.Current : Option<T>.None;
+            var current = previous;
+            var next = iterator.MoveNext() ? iterator.Current : default;
             return (default, current, next);
         }
+
         while (iterator.MoveNext())
         {
             var current = iterator.Current;
             if (filteringFunction(current))
             {
-                Option<T> next = iterator.MoveNext() ? iterator.Current : Option<T>.None;
+                var next = iterator.MoveNext() ? iterator.Current : default;
                 return (previous, current, next);
             }
 
             previous = current;
         }
 
-        return Option<(Option<T>, T, Option<T>)>.None;;
+        return null;
+    }
+    public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> enumerable) where T : struct
+    {
+        return enumerable.Where(e => e != null).Select(e => e!.Value);
     }
 
-    public static bool IsEmpty<T>(this IEnumerable<T> source) => !source.Any();
+    public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> enumerable) where T : class
+    {
+        return enumerable.Where(e => e != null).Select(e => e!);
+    }
+
+    public static bool IsEmpty<T>(this IEnumerable<T?> enumerable)
+    {
+        return !enumerable.Any();
+    }
 }

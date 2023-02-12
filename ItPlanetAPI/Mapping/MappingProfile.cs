@@ -18,16 +18,17 @@ public class MappingProfile : Profile
         // Animal location request -> animal location -> animal location DTO
         CreateMap<LocationRequest, Location>();
         CreateMap<Location, LocationDto>();
-        
+
         // Animal-location relationship -> animal-location relationship DTO
         CreateMap<Location, LocationDto>();
 
         // Animal request (update/creation) -> animal -> animal DTO
         CreateMap<AnimalCreationRequest, Animal>()
             .ForSourceMember(request => request.AnimalTypes, opt => opt.DoNotValidate())
-            .ForMember(animal=>animal.AnimalTypes,opt=>opt.Ignore());
+            .ForMember(animal => animal.AnimalTypes, opt => opt.Ignore());
         CreateMap<AnimalUpdateRequest, Animal>();
         CreateMap<Animal, AnimalDto>()
-            .ForMember(animalDto=>animalDto.AnimalTypes,opt=>opt.MapFrom(animal=>animal.AnimalTypes.Select(type=>type.TypeId)));
+            .ForMember(animalDto => animalDto.AnimalTypes,
+                opt => opt.MapFrom(animal => animal.AnimalTypes.Select(type => type.TypeId)));
     }
 }

@@ -24,16 +24,16 @@ public class AnimalLocationController : ControllerBase
 
     [HttpGet("{id:long}")]
     [ForbidOnIncorrectAuthorizationHeader]
-    public IActionResult Get(long id)
+    public async Task<IActionResult> Get(long id)
     {
         if (id <= 0) return BadRequest("Id must be positive");
 
-        var animalLocationSearchedFor = _context.Locations.Find(animalLocation => animalLocation.Id == id);
+        var animalLocationSearchedFor = await _context.Locations.FirstOrDefaultAsync(animalLocation => animalLocation.Id == id);
 
-        return animalLocationSearchedFor.Match<IActionResult>(
-            animalLocation => Ok(_mapper.Map<LocationDto>(animalLocation)),
-            NotFound("Location with this id is not found")
-        );
+        return animalLocationSearchedFor switch{
+            {} animalLocation => Ok(_mapper.Map<LocationDto>(animalLocation)),
+            null => NotFound("Location with this id is not found")
+        };
     }
 
     [HttpPut("{id:long}")]

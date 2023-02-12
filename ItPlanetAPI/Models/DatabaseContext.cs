@@ -58,7 +58,7 @@ public class DatabaseContext : DbContext
             .WithOne(a => a.Animal)
             .HasForeignKey(ao => ao.AnimalId)
             .OnDelete(DeleteBehavior.Cascade);
-        
+
         modelBuilder.Entity<Animal>()
             .HasOne(ao => ao.ChippingLocation)
             .WithMany(a => a.AnimalsChippedHere)

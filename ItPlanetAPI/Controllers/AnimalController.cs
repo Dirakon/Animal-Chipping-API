@@ -2,7 +2,6 @@ using AutoMapper;
 using ItPlanetAPI.Extensions;
 using ItPlanetAPI.Models;
 using ItPlanetAPI.Requests;
-using LanguageExt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -58,12 +57,12 @@ public class AnimalController : ControllerBase
     {
         if (id <= 0) return BadRequest("Id must be positive");
 
-        var animalSearchedFor = _context.Animals.Find(animal => animal.Id == id);
-
-        return animalSearchedFor.Match<IActionResult>(
-            animal => Ok(_mapper.Map<AnimalDto>(animal)),
-            NotFound("Location with this id is not found")
-        );
+        var animalSearchedFor = _context.Animals.SingleOrDefault(animal => animal.Id == id);
+        
+        return animalSearchedFor switch{
+            null => NotFound("Location with this id is not found"),
+            _ => Ok(_mapper.Map<AnimalDto>(animalSearchedFor)),
+        };
     }
 
     [HttpPut("{id:long}")]
@@ -72,22 +71,20 @@ public class AnimalController : ControllerBase
     {
         if (!animalRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
-
+        
         var oldAnimal =
-            await _context.Animals.SingleOrDefaultAsync(animal => animal.Id == id);
+            await _context.Animals.FirstOrDefaultAsync(animal => animal.Id == id);
         if (oldAnimal == null)
-            return NotFound();
+            return NotFound("Animal cannot be found");
+        if (!oldAnimal.IsRequestAppropriate(animalRequest))
+            return BadRequest();
 
-        return (await oldAnimal.TryTakeValuesOf(animalRequest, _mapper, _context)).Match<IActionResult>(
-            _ =>
-            {
-                // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-                _context.SaveChangesAsync();
-
-                return Ok(_mapper.Map<AnimalDto>(oldAnimal));
-            },
-            errorCode => StatusCode(errorCode)
-        );
+        if (!await oldAnimal.TryTakeValuesOf(animalRequest, _mapper, _context))
+        {
+            return NotFound("Some entities in request cannot be found");
+        }
+        await _context.SaveChangesAsync();
+        return Ok(_mapper.Map<AnimalDto>(oldAnimal));
     }
 
     [HttpPost("")]
@@ -97,23 +94,22 @@ public class AnimalController : ControllerBase
         if (!animalRequest.IsValid()) return BadRequest("Some field is invalid");
         if (animalRequest.HasConflicts()) return Conflict();
 
-        return (await Animal.From(animalRequest, _mapper, _context)).Match<IActionResult>(
-            animal =>
-            {
-                _context.Animals.Add(animal);
+        if (await Animal.TryCreateFrom(animalRequest, _mapper, _context) is { } animal)
+        {
+            _context.Animals.Add(animal);
 
-                // TODO: add await if there is a possibility of user sending a request with their ip before the changes are saved
-                _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-                return Ok(_mapper.Map<AnimalDto>(animal));
-            },
-            errorCode => StatusCode(errorCode)
-        );
+            return Ok(_mapper.Map<AnimalDto>(animal));
+        }
+        else
+        {
+            return NotFound("Some entities in request cannot be found");
+        }
     }
 
     // TODO: delete and animal-specific methods
-    
-    
+
 
     [HttpPost("{animalId:long}/types/{typeId:long}")]
     [Authorize]
@@ -122,23 +118,15 @@ public class AnimalController : ControllerBase
         if (typeId <= 0 || animalId <= 0)
             return BadRequest("Id must be positive");
         var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
-        if (animal == null)
-        {
-            return NotFound("Animal not found");
-        }
+        if (animal == null) return NotFound("Animal not found");
 
         if (animal.AnimalTypes.Any(animalType => animalType.TypeId == typeId))
-        {
             return Conflict("Animal type already present");
-        }
 
         var newType = _context.AnimalTypes.SingleOrDefault(type => type.Id == typeId);
-        if (newType == null)
-        {
-            return NotFound("Type not found");
-        }
+        if (newType == null) return NotFound("Type not found");
 
-        var newRelationship = new AnimalAndTypeRelationship()
+        var newRelationship = new AnimalAndTypeRelationship
             {Animal = animal, AnimalId = animalId, Type = newType, TypeId = typeId};
         animal.AnimalTypes.Add(newRelationship);
         newType.Animals.Add(newRelationship);
@@ -147,9 +135,8 @@ public class AnimalController : ControllerBase
 
 
         return Ok(_mapper.Map<AnimalDto>(animal));
-
     }
-    
+
     [HttpPut("{animalId:long}/types")]
     [Authorize]
     public async Task<IActionResult> UpdateType(long animalId, [FromBody] AnimalTypeUpdateRequest updateRequest)
@@ -157,31 +144,20 @@ public class AnimalController : ControllerBase
         if (updateRequest.OldTypeId <= 0 || updateRequest.NewTypeId <= 0 || animalId <= 0)
             return BadRequest("Id must be positive");
         var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
-        if (animal == null)
-        {
-            return NotFound("Animal not found");
-        }
+        if (animal == null) return NotFound("Animal not found");
 
         var oldTypeRelationship = animal.AnimalTypes.SingleOrDefault(type => type.TypeId == updateRequest.OldTypeId);
-        if (oldTypeRelationship == null)
-        {
-            return NotFound("Old type is not present on animal");
-        }
+        if (oldTypeRelationship == null) return NotFound("Old type is not present on animal");
 
         if (animal.AnimalTypes.Any(type => type.TypeId == updateRequest.NewTypeId))
-        {
             return Conflict("Animal already has the new type");
-        }
 
         var newType = _context.AnimalTypes.SingleOrDefault(animalType => animalType.Id == updateRequest.NewTypeId);
-        if (newType == null)
-        {
-            return NotFound("New type cannot be found in the database");
-        }
-        
+        if (newType == null) return NotFound("New type cannot be found in the database");
+
         var oldType = oldTypeRelationship.Type;
         oldType.Animals.Remove(oldTypeRelationship);
-        
+
         oldTypeRelationship.TypeId = updateRequest.NewTypeId;
         oldTypeRelationship.Type = newType;
 
@@ -190,32 +166,22 @@ public class AnimalController : ControllerBase
 
 
         return Ok(_mapper.Map<AnimalDto>(animal));
-
     }
-    
+
     [HttpDelete("{animalId:long}/types/{typeId:long}")]
     [Authorize]
-    public async Task<IActionResult> DeleteType(long animalId,  long typeId)
+    public async Task<IActionResult> DeleteType(long animalId, long typeId)
     {
         if (typeId <= 0 || animalId <= 0)
             return BadRequest("Id must be positive");
         var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
-        if (animal == null)
-        {
-            return NotFound("Animal not found");
-        }
+        if (animal == null) return NotFound("Animal not found");
 
         var typeRelationship = animal.AnimalTypes.SingleOrDefault(type => type.TypeId == typeId);
-        if (typeRelationship == null)
-        {
-            return NotFound("The type is not present on animal");
-        }
+        if (typeRelationship == null) return NotFound("The type is not present on animal");
 
-        if (animal.AnimalTypes.Count == 1)
-        {
-            return BadRequest("The type is the only type the animal has.");
-        }
-        
+        if (animal.AnimalTypes.Count == 1) return BadRequest("The type is the only type the animal has.");
+
         var oldType = typeRelationship.Type;
         oldType.Animals.Remove(typeRelationship);
         animal.AnimalTypes.Remove(typeRelationship);
@@ -225,9 +191,8 @@ public class AnimalController : ControllerBase
 
 
         return Ok(_mapper.Map<AnimalDto>(animal));
-        
     }
-    
+
     [HttpPost("{animalId:long}/locations/{pointId:long}")]
     [Authorize]
     public async Task<IActionResult> AddLocation(long animalId, long pointId)
@@ -235,36 +200,23 @@ public class AnimalController : ControllerBase
         if (pointId <= 0 || animalId <= 0)
             return BadRequest("Id must be positive");
         var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
-        if (animal == null)
-        {
-            return NotFound("Animal not found");
-        }
+        if (animal == null) return NotFound("Animal not found");
 
-        if (animal.LifeStatus == "DEAD")
-        {
-            return BadRequest("Cannot move dead animal.");
-        }
+        if (animal.LifeStatus == "DEAD") return BadRequest("Cannot move dead animal.");
 
         if (pointId == animal.ChippingLocationId && !animal.VisitedLocations.Any())
-        {
             return BadRequest("Animal cannot move from chipping location to chipping location");
-        }
 
         if (animal.VisitedLocations.Any() && animal.VisitedLocations.Last().LocationPointId == pointId)
-        {
             return BadRequest("Animal cannot move to the current point");
-        }
 
         var newLocation = _context.Locations.SingleOrDefault(location => location.Id == pointId);
-        if (newLocation == null)
-        {
-            return NotFound("Location not found");
-        }
+        if (newLocation == null) return NotFound("Location not found");
 
-        var newRelationship = new AnimalAndLocationRelationship()
+        var newRelationship = new AnimalAndLocationRelationship
         {
-            Id = animal.VisitedLocations.Any()? 
-                animal.VisitedLocations.Select(location=>location.Id).Max() + 1
+            Id = animal.VisitedLocations.Any()
+                ? animal.VisitedLocations.Select(location => location.Id).Max() + 1
                 : 1,
             AnimalId = animalId,
             LocationPointId = pointId,
@@ -273,12 +225,12 @@ public class AnimalController : ControllerBase
         };
         animal.VisitedLocations.Add(newRelationship);
         newLocation.AnimalsVisitedHere.Add(newRelationship);
-        
+
         await _context.SaveChangesAsync();
-        
+
         return Ok(_mapper.Map<AnimalLocationDto>(newRelationship));
     }
-    
+
     [HttpPut("{animalId:long}/locations")]
     [Authorize]
     public async Task<IActionResult> SetLocation(long animalId, [FromBody] AnimalLocationUpdateRequest request)
@@ -288,57 +240,61 @@ public class AnimalController : ControllerBase
         if (!request.IsValid())
             return BadRequest("Some field is invalid");
         var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
-        if (animal == null)
+        if (animal == null) return NotFound("Animal not found");
+
+        var result = animal.VisitedLocations
+            .FindWithNextAndPrevious(relationship => relationship.Id == request.VisitedLocationPointId);
+        if (result == null)
         {
-            return NotFound("Animal not found");
+            return NotFound("Cannot find location with this visitedLocationPointId");
         }
 
-        var result = animal.VisitedLocations.FindWithNextAndPrevious(location=>location.Id == request.VisitedLocationPointId)
-            .Map(tuple =>
-            {
-                var (previousLocation, currentLocation, nextLocation) = tuple;
-                return (
-                    previousLocation
-                        .Some(relationship => relationship.Location)
-                        .None(animal.ChippingLocation),
-                    currentLocation,
-                    nextLocation.Map(relationship => relationship.Location)
-                    );
-            })
-            .Some<Either<IActionResult,AnimalAndLocationRelationship>>(tuple=>
-            {
-                var (previousLocation, currentLocationRelationship, nextLocation) = tuple;
-                if (previousLocation.Id == request.LocationPointId || 
-                    currentLocationRelationship.Id == request.LocationPointId ||
-                    nextLocation
-                        .Some(location => location.Id == request.LocationPointId)
-                        .None(false)
-                    )
-                {
-                    return  Either<IActionResult, AnimalAndLocationRelationship>.Left(BadRequest("New location id correlates either to its neighbors or to the old location id"));
-                }
-
-                return  Either<IActionResult, AnimalAndLocationRelationship>.Right(currentLocationRelationship);
-            })
-            .None( Either<IActionResult, AnimalAndLocationRelationship>.Left(NotFound("Cannot find location with this visitedLocationPointId")));
-
-        return await result.Match<Task<IActionResult>>(
-            Left: actionResult => Task.FromResult(actionResult),
-            Right: async oldRelationship =>
-            {
-                oldRelationship.Location.AnimalsVisitedHere.Remove(oldRelationship);
-                oldRelationship.LocationPointId = request.LocationPointId;
-                
-                await _context.SaveChangesAsync();
-                
-                return Ok(_mapper.Map<AnimalLocationDto>(oldRelationship));
-            }
-        );
-        // TODO: continue
-        var emptyArray = new int[0];
-        var text = emptyArray switch
+        var oldRelationship = result.Value.Current;
+        var locationsToCheck = new[]
         {
-            [] => 0,
-        };
+            result.Value.Previous == null? animal.ChippingLocation : result.Value.Previous.Location,
+            result.Value.Current.Location,
+            result.Value.Next?.Location
+        }.NotNull();
+        if (locationsToCheck.Any(location => location.Id == request.LocationPointId))
+        {
+            return BadRequest("New location id correlates either to its neighbors or to the old location id");
+        }
+        
+        var newLocation =
+            _context.Locations.SingleOrDefault(location => location.Id == request.LocationPointId);
+        if (newLocation == null)
+            return NotFound("Cannot find the new location");
+
+        oldRelationship.ChangeLocationTo(newLocation);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(_mapper.Map<AnimalLocationDto>(oldRelationship));
     }
-}
+
+
+    [HttpDelete("{animalId:long}/locations/{visitedPointId:long}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteLocation(long animalId, long visitedPointId)
+    {
+        if (animalId <= 0 || visitedPointId <= 0)
+            return BadRequest("Id must be positive");
+        var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
+        if (animal == null) return NotFound("Animal not found");
+
+        var locationRelationship =
+            animal.VisitedLocations.FirstOrDefault(locationRelationship =>
+                locationRelationship.Id == visitedPointId);
+
+        if (locationRelationship == null)
+        {
+            return NotFound("Location cannot be found");
+        }
+        else
+        {
+            // TODO: finish
+            // Next? Previous? Ouch.
+        }
+            
+    }
