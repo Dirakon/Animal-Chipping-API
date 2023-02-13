@@ -8,14 +8,14 @@ namespace ItPlanetAPI.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class AnimalLocationController : ControllerBase
+public class LocationController : ControllerBase
 {
     private readonly DatabaseContext _context;
-    private readonly ILogger<AnimalLocationController> _logger;
+    private readonly ILogger<LocationController> _logger;
 
     private readonly IMapper _mapper;
 
-    public AnimalLocationController(ILogger<AnimalLocationController> logger, DatabaseContext context, IMapper mapper)
+    public LocationController(ILogger<LocationController> logger, DatabaseContext context, IMapper mapper)
     {
         _logger = logger;
         _context = context;
@@ -28,10 +28,12 @@ public class AnimalLocationController : ControllerBase
     {
         if (id <= 0) return BadRequest("Id must be positive");
 
-        var animalLocationSearchedFor = await _context.Locations.FirstOrDefaultAsync(animalLocation => animalLocation.Id == id);
+        var locationSearchedFor =
+            await _context.Locations.FirstOrDefaultAsync(animalLocation => animalLocation.Id == id);
 
-        return animalLocationSearchedFor switch{
-            {} animalLocation => Ok(_mapper.Map<LocationDto>(animalLocation)),
+        return locationSearchedFor switch
+        {
+            { } location => Ok(_mapper.Map<LocationDto>(location)),
             null => NotFound("Location with this id is not found")
         };
     }
@@ -43,9 +45,9 @@ public class AnimalLocationController : ControllerBase
         if (!locationRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
 
-        var oldAnimalLocation =
+        var oldLocation =
             await _context.Locations.SingleOrDefaultAsync(animalLocation => animalLocation.Id == id);
-        if (oldAnimalLocation == null)
+        if (oldLocation == null)
             return NotFound();
 
         var coordinatesAlreadyPresent = _context.Locations.Any(locationToCheck =>
@@ -54,11 +56,11 @@ public class AnimalLocationController : ControllerBase
         );
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 
-        _mapper.Map(locationRequest, oldAnimalLocation);
+        _mapper.Map(locationRequest, oldLocation);
 
         await _context.SaveChangesAsync();
 
-        return Ok(_mapper.Map<LocationDto>(oldAnimalLocation));
+        return Ok(_mapper.Map<LocationDto>(oldLocation));
     }
 
     [HttpPost("")]
@@ -73,17 +75,17 @@ public class AnimalLocationController : ControllerBase
         );
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 
-        var animalLocation = _mapper.Map<Location>(locationRequest);
+        var location = _mapper.Map<Location>(locationRequest);
         if (!_context.Locations.Any())
-            animalLocation.Id = 1;
+            location.Id = 1;
         else
-            animalLocation.Id =
+            location.Id =
                 await _context.Locations.Select(locationToCheck => locationToCheck.Id).MaxAsync() + 1;
 
-        _context.Locations.Add(animalLocation);
+        _context.Locations.Add(location);
         await _context.SaveChangesAsync();
 
-        return Ok(_mapper.Map<LocationDto>(animalLocation));
+        return Ok(_mapper.Map<LocationDto>(location));
     }
 
     [HttpDelete("{id:long}")]
@@ -92,16 +94,19 @@ public class AnimalLocationController : ControllerBase
     {
         if (id <= 0) return BadRequest("Id must be positive");
 
-        var oldAnimalLocation =
-            await _context.Locations.SingleOrDefaultAsync(animalLocation => animalLocation.Id == id);
-        if (oldAnimalLocation == null)
+        var oldLocation =
+            await _context.Locations
+                .Include(location=>location.AnimalsChippedHere)
+                .Include(location=>location.AnimalsVisitedHere)
+                .SingleOrDefaultAsync(animalLocation => animalLocation.Id == id);
+        if (oldLocation == null)
             return NotFound();
 
         var locationIsPresentInAnimals =
-            oldAnimalLocation.AnimalsChippedHere.Any() || oldAnimalLocation.AnimalsVisitedHere.Any();
+            oldLocation.AnimalsChippedHere.Any() || oldLocation.AnimalsVisitedHere.Any();
         if (locationIsPresentInAnimals) return BadRequest("Animal connected with this location is present");
 
-        _context.Locations.Remove(oldAnimalLocation);
+        _context.Locations.Remove(oldLocation);
 
         await _context.SaveChangesAsync();
 

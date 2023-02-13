@@ -30,6 +30,7 @@ public static class LinqExtensions
 
         return null;
     }
+
     public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> enumerable) where T : struct
     {
         return enumerable.Where(e => e != null).Select(e => e!.Value);

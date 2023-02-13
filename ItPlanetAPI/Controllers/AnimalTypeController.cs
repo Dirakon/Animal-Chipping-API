@@ -30,8 +30,9 @@ public class AnimalTypeController : ControllerBase
 
         var animalTypeSearchedFor = await _context.AnimalTypes.FirstOrDefaultAsync(animalType => animalType.Id == id);
 
-        return animalTypeSearchedFor switch{
-            {} animalType => Ok(_mapper.Map<AnimalTypeDto>(animalType)),
+        return animalTypeSearchedFor switch
+        {
+            { } animalType => Ok(_mapper.Map<AnimalTypeDto>(animalType)),
             null => NotFound("Animal type with this id is not found")
         };
     }
@@ -85,7 +86,9 @@ public class AnimalTypeController : ControllerBase
     {
         if (id <= 0) return BadRequest("Id must be positive");
 
-        var oldAnimalType = await _context.AnimalTypes.SingleOrDefaultAsync(animalType => animalType.Id == id);
+        var oldAnimalType = await _context.AnimalTypes
+            .Include(animalType=>animalType.Animals)
+            .SingleOrDefaultAsync(animalType => animalType.Id == id);
         if (oldAnimalType == null)
             return NotFound();
 

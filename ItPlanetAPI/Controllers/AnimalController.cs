@@ -46,22 +46,35 @@ public class AnimalController : ControllerBase
 
         if (searchRequest.LifeStatus != null)
             query = query.Where(animal => animal.LifeStatus == searchRequest.LifeStatus);
-
-        return Ok(query.OrderBy(animal => animal.Id).Skip(searchRequest.From).Take(searchRequest.Size));
+        
+        
+        return Ok(
+            query
+                .OrderBy(animal => animal.Id)
+                .Skip(searchRequest.From)
+                .Take(searchRequest.Size)
+                .Include(animal=>animal.AnimalTypes)
+                .Include(animal=>animal.VisitedLocations)
+                .Select(animal=>_mapper.Map<AnimalDto>(animal))
+            );
     }
 
 
     [HttpGet("{id:long}")]
     [ForbidOnIncorrectAuthorizationHeader]
-    public IActionResult GetAnimal(long id)
+    public async Task<IActionResult> GetAnimal(long id)
     {
         if (id <= 0) return BadRequest("Id must be positive");
 
-        var animalSearchedFor = _context.Animals.SingleOrDefault(animal => animal.Id == id);
-        
-        return animalSearchedFor switch{
+        var animalSearchedFor = await _context.Animals
+            .Include(animal=>animal.AnimalTypes)
+            .Include(animal=>animal.VisitedLocations)
+            .FirstOrDefaultAsync(animal => animal.Id == id);
+
+        return animalSearchedFor switch
+        {
             null => NotFound("Location with this id is not found"),
-            _ => Ok(_mapper.Map<AnimalDto>(animalSearchedFor)),
+            _ => Ok(_mapper.Map<AnimalDto>(animalSearchedFor))
         };
     }
 
@@ -71,18 +84,20 @@ public class AnimalController : ControllerBase
     {
         if (!animalRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
-        
+
         var oldAnimal =
-            await _context.Animals.FirstOrDefaultAsync(animal => animal.Id == id);
+            await _context.Animals
+                .Include(animal=>animal.AnimalTypes)
+                .Include(animal=>animal.VisitedLocations)
+                .FirstOrDefaultAsync(animal => animal.Id == id);
         if (oldAnimal == null)
             return NotFound("Animal cannot be found");
         if (!oldAnimal.IsRequestAppropriate(animalRequest))
             return BadRequest();
 
         if (!await oldAnimal.TryTakeValuesOf(animalRequest, _mapper, _context))
-        {
             return NotFound("Some entities in request cannot be found");
-        }
+
         await _context.SaveChangesAsync();
         return Ok(_mapper.Map<AnimalDto>(oldAnimal));
     }
@@ -96,16 +111,12 @@ public class AnimalController : ControllerBase
 
         if (await Animal.TryCreateFrom(animalRequest, _mapper, _context) is { } animal)
         {
-            _context.Animals.Add(animal);
-
             await _context.SaveChangesAsync();
 
             return Ok(_mapper.Map<AnimalDto>(animal));
         }
-        else
-        {
-            return NotFound("Some entities in request cannot be found");
-        }
+
+        return NotFound("Some entities in request cannot be found");
     }
 
     // TODO: delete and animal-specific methods
@@ -117,7 +128,9 @@ public class AnimalController : ControllerBase
     {
         if (typeId <= 0 || animalId <= 0)
             return BadRequest("Id must be positive");
-        var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
+        var animal = await _context.Animals
+            .Include(animal=>animal.AnimalTypes)
+            .FirstOrDefaultAsync(animal => animal.Id == animalId);
         if (animal == null) return NotFound("Animal not found");
 
         if (animal.AnimalTypes.Any(animalType => animalType.TypeId == typeId))
@@ -128,11 +141,10 @@ public class AnimalController : ControllerBase
 
         var newRelationship = new AnimalAndTypeRelationship
             {Animal = animal, AnimalId = animalId, Type = newType, TypeId = typeId};
-        animal.AnimalTypes.Add(newRelationship);
-        newType.Animals.Add(newRelationship);
+
+        newRelationship.InitializeRelationship();
 
         await _context.SaveChangesAsync();
-
 
         return Ok(_mapper.Map<AnimalDto>(animal));
     }
@@ -143,7 +155,9 @@ public class AnimalController : ControllerBase
     {
         if (updateRequest.OldTypeId <= 0 || updateRequest.NewTypeId <= 0 || animalId <= 0)
             return BadRequest("Id must be positive");
-        var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
+        var animal = await _context.Animals
+            .Include(animal=>animal.AnimalTypes)
+            .FirstOrDefaultAsync(animal => animal.Id == animalId);
         if (animal == null) return NotFound("Animal not found");
 
         var oldTypeRelationship = animal.AnimalTypes.SingleOrDefault(type => type.TypeId == updateRequest.OldTypeId);
@@ -155,15 +169,9 @@ public class AnimalController : ControllerBase
         var newType = _context.AnimalTypes.SingleOrDefault(animalType => animalType.Id == updateRequest.NewTypeId);
         if (newType == null) return NotFound("New type cannot be found in the database");
 
-        var oldType = oldTypeRelationship.Type;
-        oldType.Animals.Remove(oldTypeRelationship);
-
-        oldTypeRelationship.TypeId = updateRequest.NewTypeId;
-        oldTypeRelationship.Type = newType;
-
-
+        oldTypeRelationship.ChangeTypeTo(newType);
+        
         await _context.SaveChangesAsync();
-
 
         return Ok(_mapper.Map<AnimalDto>(animal));
     }
@@ -174,7 +182,9 @@ public class AnimalController : ControllerBase
     {
         if (typeId <= 0 || animalId <= 0)
             return BadRequest("Id must be positive");
-        var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
+        var animal = await _context.Animals
+            .Include(animal=>animal.AnimalTypes)
+            .FirstOrDefaultAsync(animal => animal.Id == animalId);
         if (animal == null) return NotFound("Animal not found");
 
         var typeRelationship = animal.AnimalTypes.SingleOrDefault(type => type.TypeId == typeId);
@@ -182,10 +192,7 @@ public class AnimalController : ControllerBase
 
         if (animal.AnimalTypes.Count == 1) return BadRequest("The type is the only type the animal has.");
 
-        var oldType = typeRelationship.Type;
-        oldType.Animals.Remove(typeRelationship);
-        animal.AnimalTypes.Remove(typeRelationship);
-
+        typeRelationship.Remove(_context);
 
         await _context.SaveChangesAsync();
 
@@ -199,7 +206,9 @@ public class AnimalController : ControllerBase
     {
         if (pointId <= 0 || animalId <= 0)
             return BadRequest("Id must be positive");
-        var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
+        var animal = await _context.Animals
+            .Include(animal=>animal.VisitedLocations)
+            .FirstOrDefaultAsync(animal => animal.Id == animalId);
         if (animal == null) return NotFound("Animal not found");
 
         if (animal.LifeStatus == "DEAD") return BadRequest("Cannot move dead animal.");
@@ -223,8 +232,7 @@ public class AnimalController : ControllerBase
             Animal = animal,
             Location = newLocation
         };
-        animal.VisitedLocations.Add(newRelationship);
-        newLocation.AnimalsVisitedHere.Add(newRelationship);
+        newRelationship.InitializeRelationship();
 
         await _context.SaveChangesAsync();
 
@@ -239,30 +247,28 @@ public class AnimalController : ControllerBase
             return BadRequest("Id must be positive");
         if (!request.IsValid())
             return BadRequest("Some field is invalid");
-        var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
+        var animal = _context.Animals
+            .Include(animal=>animal.VisitedLocations)
+            .Include(animal=>animal.ChippingLocation)
+            .SingleOrDefault(animal => animal.Id == animalId);
         if (animal == null) return NotFound("Animal not found");
 
-        var result = animal.VisitedLocations
+        var locationTriplet = animal.VisitedLocations
             .FindWithNextAndPrevious(relationship => relationship.Id == request.VisitedLocationPointId);
-        if (result == null)
-        {
-            return NotFound("Cannot find location with this visitedLocationPointId");
-        }
+        if (locationTriplet == null) return NotFound("Cannot find location with this visitedLocationPointId");
 
-        var oldRelationship = result.Value.Current;
+        var oldRelationship = locationTriplet.Value.Current;
         var locationsToCheck = new[]
         {
-            result.Value.Previous == null? animal.ChippingLocation : result.Value.Previous.Location,
-            result.Value.Current.Location,
-            result.Value.Next?.Location
+            locationTriplet.Value.Previous == null ? animal.ChippingLocation : locationTriplet.Value.Previous.Location,
+            locationTriplet.Value.Current.Location,
+            locationTriplet.Value.Next?.Location
         }.NotNull();
         if (locationsToCheck.Any(location => location.Id == request.LocationPointId))
-        {
             return BadRequest("New location id correlates either to its neighbors or to the old location id");
-        }
-        
+
         var newLocation =
-            _context.Locations.SingleOrDefault(location => location.Id == request.LocationPointId);
+            await _context.Locations.FirstOrDefaultAsync(location => location.Id == request.LocationPointId);
         if (newLocation == null)
             return NotFound("Cannot find the new location");
 
@@ -280,21 +286,25 @@ public class AnimalController : ControllerBase
     {
         if (animalId <= 0 || visitedPointId <= 0)
             return BadRequest("Id must be positive");
-        var animal = _context.Animals.SingleOrDefault(animal => animal.Id == animalId);
+        var animal = await _context.Animals
+            .Include(animal=>animal.VisitedLocations)
+            .Include(animal=>animal.ChippingLocation)
+            .FirstOrDefaultAsync(animal => animal.Id == animalId);
         if (animal == null) return NotFound("Animal not found");
 
-        var locationRelationship =
-            animal.VisitedLocations.FirstOrDefault(locationRelationship =>
-                locationRelationship.Id == visitedPointId);
 
-        if (locationRelationship == null)
-        {
-            return NotFound("Location cannot be found");
-        }
-        else
-        {
-            // TODO: finish
-            // Next? Previous? Ouch.
-        }
-            
+        var locationRelationship = animal.VisitedLocations
+            .FirstOrDefault(relationship => relationship.Id == visitedPointId);
+        if (locationRelationship == null) return NotFound("Cannot find location with this visitedLocationPointId");
+
+        locationRelationship.Remove(_context);
+
+        if (animal.VisitedLocations.FirstOrDefault() is { } firstLocationRelationship &&
+            firstLocationRelationship.Location == animal.ChippingLocation)
+            firstLocationRelationship.Remove(_context);
+
+        await _context.SaveChangesAsync();
+
+        return Ok();
     }
+}

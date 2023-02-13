@@ -17,4 +17,23 @@ public class AnimalAndLocationRelationship
         Location = newLocation;
         Location.AnimalsVisitedHere.Add(this);
     }
+
+
+    public void Remove(DatabaseContext databaseContext)
+    {
+        databaseContext.Remove(this);
+        //
+        // Location.AnimalsVisitedHere.Remove(this);
+        // Animal.VisitedLocations.Remove(this);
+        // Animal = null;
+        // Location = null;
+        // AnimalId = -1;
+        // LocationPointId = -1;
+    }
+
+    public void InitializeRelationship()
+    {
+        Animal.VisitedLocations.Add(this);
+        Location.AnimalsVisitedHere.Add(this);
+    }
 }

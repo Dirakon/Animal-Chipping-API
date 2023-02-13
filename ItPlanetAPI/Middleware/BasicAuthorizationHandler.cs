@@ -25,8 +25,9 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
         if (!Request.Headers.ContainsKey("Authorization"))
             return AuthenticateResult.Fail("Missing Authorization header");
 
-        return ParseAuthorizationHeader(Request.Headers["Authorization"]) switch{
-            var (email,password) => await TryToAuthorize(email,password),
+        return ParseAuthorizationHeader(Request.Headers["Authorization"]) switch
+        {
+            var (email, password) => await TryToAuthorize(email, password),
             null => AuthenticateResult.Fail("Invalid Authorization header")
         };
     }

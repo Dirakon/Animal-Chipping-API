@@ -17,8 +17,6 @@ public class DatabaseContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
-
         InitAnimalAndLocationRelationship(modelBuilder);
         InitAnimalAndTypeRelationship(modelBuilder);
         InitAnimalAndAccountRelationship(modelBuilder);
@@ -47,23 +45,22 @@ public class DatabaseContext : DbContext
         modelBuilder.Entity<AnimalAndLocationRelationship>()
             .HasKey(ao => new {ao.AnimalId, LocationId = ao.LocationPointId});
 
-        modelBuilder.Entity<Location>()
-            .HasMany(ao => ao.AnimalsVisitedHere)
-            .WithOne(a => a.Location)
+        modelBuilder.Entity<AnimalAndLocationRelationship>()
+            .HasOne(a => a.Location)
+            .WithMany(ao => ao.AnimalsVisitedHere)
             .HasForeignKey(ao => ao.LocationPointId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<Animal>()
-            .HasMany(ao => ao.VisitedLocations)
-            .WithOne(a => a.Animal)
+        modelBuilder.Entity<AnimalAndLocationRelationship>()
+            .HasOne(a => a.Animal)
+            .WithMany(ao => ao.VisitedLocations)
             .HasForeignKey(ao => ao.AnimalId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Animal>()
             .HasOne(ao => ao.ChippingLocation)
             .WithMany(a => a.AnimalsChippedHere)
-            .HasForeignKey(ao => ao.ChippingLocationId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(ao => ao.ChippingLocationId);
     }
 
     private static void InitAnimalAndTypeRelationship(ModelBuilder modelBuilder)
@@ -71,15 +68,15 @@ public class DatabaseContext : DbContext
         modelBuilder.Entity<AnimalAndTypeRelationship>()
             .HasKey(ao => new {ao.AnimalId, ao.TypeId});
 
-        modelBuilder.Entity<AnimalType>()
-            .HasMany(ao => ao.Animals)
-            .WithOne(a => a.Type)
+        modelBuilder.Entity<AnimalAndTypeRelationship>()
+            .HasOne(a => a.Type)
+            .WithMany(ao => ao.Animals)
             .HasForeignKey(ao => ao.TypeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<Animal>()
-            .HasMany(ao => ao.AnimalTypes)
-            .WithOne(a => a.Animal)
+        modelBuilder.Entity<AnimalAndTypeRelationship>()
+            .HasOne(a => a.Animal)
+            .WithMany(ao => ao.AnimalTypes)
             .HasForeignKey(ao => ao.AnimalId)
             .OnDelete(DeleteBehavior.Cascade);
     }
@@ -89,7 +86,6 @@ public class DatabaseContext : DbContext
         modelBuilder.Entity<Animal>()
             .HasOne(ao => ao.Chipper)
             .WithMany(a => a.ChippedAnimals)
-            .HasForeignKey(ao => ao.ChipperId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(ao => ao.ChipperId);
     }
 }

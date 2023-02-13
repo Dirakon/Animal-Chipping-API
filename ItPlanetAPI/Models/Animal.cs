@@ -1,4 +1,5 @@
 using AutoMapper;
+using ItPlanetAPI.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Models;
@@ -36,22 +37,23 @@ public class Animal
     public static async Task<Animal?> TryCreateFrom(AnimalCreationRequest request, IMapper mapper,
         DatabaseContext databaseContext)
     {
-
-
-        return (await GetNeededEntities(databaseContext, request.AnimalTypes, request.ChippingLocationId,
-                request.ChipperId)) switch
+        return await GetNeededEntities(databaseContext, request.AnimalTypes, request.ChippingLocationId,
+                request.ChipperId) switch
             {
                 var (chippingAccount, chippingLocation, typesToConnectTo) => CreateFrom(request, mapper,
-                    chippingAccount, chippingLocation, typesToConnectTo),
+                    chippingAccount, chippingLocation, typesToConnectTo,  databaseContext),
                 null => null
             };
     }
 
-    private static Animal CreateFrom(AnimalCreationRequest request, IMapper mapper, Account chippingAccount, Location chippingLocation, List<AnimalType> typesToConnectTo)
+    private static Animal CreateFrom(AnimalCreationRequest request, IMapper mapper, Account chippingAccount,
+        Location chippingLocation, List<AnimalType> typesToConnectTo, DatabaseContext databaseContext)
     {
         var animal = mapper.Map<Animal>(request);
         animal.LifeStatus = "ALIVE";
-        
+        animal.Id = databaseContext.Animals.IsEmpty()? 1:databaseContext.Animals.Select(animal=>animal.Id).Max()+1;
+        databaseContext.Animals.Add(animal);
+
         chippingAccount.ChippedAnimals.Add(animal);
         animal.Chipper = chippingAccount;
 
@@ -60,14 +62,13 @@ public class Animal
 
         foreach (var animalType in typesToConnectTo)
         {
-            var newRelationship = new AnimalAndTypeRelationship {Animal = animal, Type = animalType};
-            animalType.Animals.Add(newRelationship);
-            animal.AnimalTypes.Add(newRelationship);
+            var newRelationship = new AnimalAndTypeRelationship {Animal = animal, AnimalId = animal.Id, Type = animalType, TypeId = animalType.Id};
+            newRelationship.InitializeRelationship();
         }
 
         return animal;
-
     }
+
     private static async Task<(Account chippingAccount, Location chippingLocation, List<AnimalType>
             typesToConnectTo)?>
         GetNeededEntities(DatabaseContext databaseContext, List<long>? animalTypes, long chippingLocationId,
@@ -88,8 +89,9 @@ public class Animal
         );
 
 
-        return locationAndAccount switch{
-            ({} location, {} account) => (account,location,typesToConnectTo),
+        return locationAndAccount switch
+        {
+            ({ } location, { } account) => (account, location, typesToConnectTo),
             _ => null
         };
     }
@@ -102,33 +104,40 @@ public class Animal
             return false;
         return true;
     }
-    
+
     public async Task<bool> TryTakeValuesOf(AnimalUpdateRequest request, IMapper mapper,
         DatabaseContext databaseContext)
     {
         var neededEntities = await GetNeededEntities(databaseContext, null, chipperId: request.ChipperId,
             chippingLocationId: request.ChippingLocationId);
-        
-        if (neededEntities is ({ } newChippingAccount,{} newChippingLocation, _))
+
+        if (neededEntities is ({ } newChippingAccount, { } newChippingLocation, _))
         {
+            if (request.LifeStatus == "DEAD" && LifeStatus == "ALIVE")
+            {
+                DeathDateTime = DateTime.Now;
+            }
+            
             if (Chipper != newChippingAccount)
             {
                 Chipper.ChippedAnimals.Remove(this);
                 newChippingAccount.ChippedAnimals.Add(this);
                 Chipper = newChippingAccount;
+                ChipperId = newChippingAccount.Id;
             }
-                
+
             if (ChippingLocation != newChippingLocation)
             {
                 ChippingLocation.AnimalsChippedHere.Remove(this);
                 newChippingLocation.AnimalsChippedHere.Add(this);
                 ChippingLocation = newChippingLocation;
+                ChippingLocationId = newChippingLocation.Id;
             }
+
+            mapper.Map(request,this);
             return true;
         }
-        else
-        {
-            return false;
-        }
+
+        return false;
     }
 }

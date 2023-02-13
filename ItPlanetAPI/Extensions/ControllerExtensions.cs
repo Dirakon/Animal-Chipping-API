@@ -14,10 +14,11 @@ public static class ControllerExtensions
 
     public static async Task<Account?> GetAuthenticatedAccount(this ControllerBase controller, DatabaseContext context)
     {
-        return controller.GetAuthenticatedUserId() switch{
-            null => null, 
-            {} id => await context.Accounts.SingleOrDefaultAsync(u =>
-                u.Id == id),
+        return controller.GetAuthenticatedUserId() switch
+        {
+            null => null,
+            { } id => await context.Accounts.SingleOrDefaultAsync(u =>
+                u.Id == id)
         };
     }
 

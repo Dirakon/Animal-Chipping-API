@@ -15,7 +15,7 @@ public class MappingProfile : Profile
         CreateMap<AnimalTypeRequest, AnimalType>();
         CreateMap<AnimalType, AnimalTypeDto>();
 
-        // Animal location request -> animal location -> animal location DTO
+        // Location request -> location -> location DTO
         CreateMap<LocationRequest, Location>();
         CreateMap<Location, LocationDto>();
 
@@ -29,6 +29,12 @@ public class MappingProfile : Profile
         CreateMap<AnimalUpdateRequest, Animal>();
         CreateMap<Animal, AnimalDto>()
             .ForMember(animalDto => animalDto.AnimalTypes,
-                opt => opt.MapFrom(animal => animal.AnimalTypes.Select(type => type.TypeId)));
+                opt => opt.MapFrom(animal => animal.AnimalTypes.Select(type => type.TypeId).ToList()))
+            .ForMember(animalDto => animalDto.VisitedLocations,
+                opt => opt.MapFrom(animal => animal.VisitedLocations.Select(location => location.LocationPointId).ToList()));
+        
+        // Animal-location relationship -> animal-location relationship DTO
+        CreateMap<AnimalAndLocationRelationship, AnimalLocationDto>();
+
     }
 }

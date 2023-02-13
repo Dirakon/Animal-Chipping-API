@@ -43,14 +43,15 @@ public class AccountsController : ControllerBase
 
     [HttpGet("{id:int}")]
     [ForbidOnIncorrectAuthorizationHeader]
-    public async Task<IActionResult>Get(int id)
+    public async Task<IActionResult> Get(int id)
     {
         if (id <= 0) return BadRequest("Id must be positive");
 
         var accountSearchedFor = await _context.Accounts.FirstOrDefaultAsync(user => user.Id == id);
 
-        return accountSearchedFor switch{
-            {} account => Ok(_mapper.Map<AccountDto>(account)),
+        return accountSearchedFor switch
+        {
+            { } account => Ok(_mapper.Map<AccountDto>(account)),
             null => NotFound("User with this id is not found")
         };
     }
@@ -112,7 +113,7 @@ public class AccountsController : ControllerBase
         if (id != authorizedUserId) return Forbid();
 
         var accountToRemove =
-            await _context.Accounts.SingleOrDefaultAsync(account => account.Id == id);
+            await _context.Accounts.Include(account=>account.ChippedAnimals).SingleOrDefaultAsync(account => account.Id == id);
         if (accountToRemove == null)
             return Forbid();
 
