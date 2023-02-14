@@ -1,4 +1,5 @@
 using AutoMapper;
+using ItPlanetAPI.Extensions;
 using ItPlanetAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,14 +9,14 @@ namespace ItPlanetAPI.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class LocationController : ControllerBase
+public class LocationsController : ControllerBase
 {
     private readonly DatabaseContext _context;
-    private readonly ILogger<LocationController> _logger;
+    private readonly ILogger<LocationsController> _logger;
 
     private readonly IMapper _mapper;
 
-    public LocationController(ILogger<LocationController> logger, DatabaseContext context, IMapper mapper)
+    public LocationsController(ILogger<LocationsController> logger, DatabaseContext context, IMapper mapper)
     {
         _logger = logger;
         _context = context;
@@ -50,10 +51,7 @@ public class LocationController : ControllerBase
         if (oldLocation == null)
             return NotFound();
 
-        var coordinatesAlreadyPresent = _context.Locations.Any(locationToCheck =>
-            locationToCheck.Latitude.AlmostEqualTo(locationRequest.Latitude) &&
-            locationToCheck.Longitude.AlmostEqualTo(locationRequest.Longitude)
-        );
+        var coordinatesAlreadyPresent = await _context.Locations.AnyAsync(Location.IsAlmostTheSameAs(locationRequest));
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 
         _mapper.Map(locationRequest, oldLocation);
@@ -69,18 +67,11 @@ public class LocationController : ControllerBase
     {
         if (!locationRequest.IsValid()) return BadRequest("Some field is invalid");
 
-        var coordinatesAlreadyPresent = _context.Locations.Any(locationToCheck =>
-            locationToCheck.Latitude.AlmostEqualTo(locationRequest.Latitude) &&
-            locationToCheck.Longitude.AlmostEqualTo(locationRequest.Longitude)
-        );
+        var coordinatesAlreadyPresent = await _context.Locations.AnyAsync(Location.IsAlmostTheSameAs(locationRequest));
+            
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 
         var location = _mapper.Map<Location>(locationRequest);
-        if (!_context.Locations.Any())
-            location.Id = 1;
-        else
-            location.Id =
-                await _context.Locations.Select(locationToCheck => locationToCheck.Id).MaxAsync() + 1;
 
         _context.Locations.Add(location);
         await _context.SaveChangesAsync();

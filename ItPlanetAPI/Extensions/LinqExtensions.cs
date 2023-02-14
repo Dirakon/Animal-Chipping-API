@@ -1,3 +1,6 @@
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
+
 namespace ItPlanetAPI.Extensions;
 
 public static class LinqExtensions
@@ -44,5 +47,17 @@ public static class LinqExtensions
     public static bool IsEmpty<T>(this IEnumerable<T?> enumerable)
     {
         return !enumerable.Any();
+    }
+
+    public static async Task<bool> IsEmptyAsync<T>(this IQueryable<T?> enumerable)
+    {
+        return ! await enumerable.AnyAsync();
+    }
+    
+    public static Expression<Func<T, bool>> And<T>(this Expression<Func<T, bool>> expression1,Expression<Func<T, bool>> expression2)
+    {
+        InvocationExpression invokedExpression = Expression.Invoke(expression2, expression1.Parameters.Cast<Expression>());
+
+        return Expression.Lambda<Func<T, bool>>(Expression.And(expression1.Body, invokedExpression), expression1.Parameters);
     }
 }

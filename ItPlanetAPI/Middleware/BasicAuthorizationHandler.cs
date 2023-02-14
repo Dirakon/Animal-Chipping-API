@@ -34,7 +34,7 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
 
     private async Task<AuthenticateResult> TryToAuthorize(string email, string password)
     {
-        var user = await _context.Accounts.SingleOrDefaultAsync(u =>
+        var user = await _context.Accounts.FirstOrDefaultAsync(u =>
             u.Email == email && u.Password == password);
         if (user == null) return AuthenticateResult.Fail("Invalid email or password");
 

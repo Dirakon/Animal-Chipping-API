@@ -92,10 +92,6 @@ public class AccountsController : ControllerBase
         if (emailAlreadyPresent) return Conflict("Account with this e-mail already present");
 
         var account = _mapper.Map<Account>(accountCreationRequest);
-        if (!_context.Accounts.Any())
-            account.Id = 1;
-        else
-            account.Id = await _context.Accounts.Select(acc => acc.Id).MaxAsync() + 1;
 
         _context.Accounts.Add(account);
         await _context.SaveChangesAsync();

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ItPlanetAPI.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("animals/types")]
 public class AnimalTypeController : ControllerBase
 {
     private readonly DatabaseContext _context;
@@ -48,7 +48,7 @@ public class AnimalTypeController : ControllerBase
         if (oldAnimalType == null)
             return NotFound();
 
-        var newTypeAlreadyPresent = _context.AnimalTypes.Any(typeToCheck =>
+        var newTypeAlreadyPresent = await _context.AnimalTypes.AnyAsync(typeToCheck =>
             typeToCheck.Type == animalTypeRequest.Type && typeToCheck.Id != id);
         if (newTypeAlreadyPresent) return Conflict("Animal type with this 'type' field already present");
 
@@ -65,14 +65,10 @@ public class AnimalTypeController : ControllerBase
     {
         if (!animalTypeRequest.IsValid()) return BadRequest("Some field is invalid");
 
-        var newTypeAlreadyPresent = _context.AnimalTypes.Any(typeToCheck => typeToCheck.Type == animalTypeRequest.Type);
+        var newTypeAlreadyPresent =await _context.AnimalTypes.AnyAsync(typeToCheck => typeToCheck.Type == animalTypeRequest.Type);
         if (newTypeAlreadyPresent) return Conflict("Animal type with this 'type' field already present");
 
         var animalType = _mapper.Map<AnimalType>(animalTypeRequest);
-        if (!_context.AnimalTypes.Any())
-            animalType.Id = 1;
-        else
-            animalType.Id = await _context.AnimalTypes.Select(typeToCheck => typeToCheck.Id).MaxAsync() + 1;
 
         _context.AnimalTypes.Add(animalType);
         await _context.SaveChangesAsync();

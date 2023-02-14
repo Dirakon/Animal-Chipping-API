@@ -1,7 +1,6 @@
 using ItPlanetAPI;
 using ItPlanetAPI.Models;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -45,13 +44,18 @@ builder.Services.AddSwaggerGen(option =>
     });
 });
 
-
-var sqliteConnection = new SqliteConnection("DataSource=:memory:");
-sqliteConnection.Open(); // open connection to use
 builder.Services.AddDbContext<DatabaseContext>(options =>
     {
-        using var ctx = new DatabaseContext(options.UseSqlite(sqliteConnection).Options);
+        const string defaultStr = "Server=localhost,1433;Database=chipping;Persist Security Info=True; Encrypt=False;User ID=sa;Password=YourStrong@Passw0rd;Trust Server Certificate=True;";
+        
+        var str = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
+            ? defaultStr
+            :Environment.GetEnvironmentVariable("CONNECTION_STRING");
+        
+        using var ctx = new DatabaseContext(options.UseSqlServer(str).Options);
         ctx.Database.EnsureCreated();
+        
+        //ctx.Database.EnsureDeleted();
     }
 );
 var app = builder.Build();

@@ -10,14 +10,14 @@ namespace ItPlanetAPI.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class AnimalController : ControllerBase
+public class AnimalsController : ControllerBase
 {
     private readonly DatabaseContext _context;
-    private readonly ILogger<AnimalController> _logger;
+    private readonly ILogger<AnimalsController> _logger;
 
     private readonly IMapper _mapper;
 
-    public AnimalController(ILogger<AnimalController> logger, DatabaseContext context, IMapper mapper)
+    public AnimalsController(ILogger<AnimalsController> logger, DatabaseContext context, IMapper mapper)
     {
         _logger = logger;
         _context = context;
@@ -136,7 +136,7 @@ public class AnimalController : ControllerBase
         if (animal.AnimalTypes.Any(animalType => animalType.TypeId == typeId))
             return Conflict("Animal type already present");
 
-        var newType = _context.AnimalTypes.SingleOrDefault(type => type.Id == typeId);
+        var newType = await _context.AnimalTypes.FirstOrDefaultAsync(type => type.Id == typeId);
         if (newType == null) return NotFound("Type not found");
 
         var newRelationship = new AnimalAndTypeRelationship
@@ -166,7 +166,7 @@ public class AnimalController : ControllerBase
         if (animal.AnimalTypes.Any(type => type.TypeId == updateRequest.NewTypeId))
             return Conflict("Animal already has the new type");
 
-        var newType = _context.AnimalTypes.SingleOrDefault(animalType => animalType.Id == updateRequest.NewTypeId);
+        var newType = await _context.AnimalTypes.FirstOrDefaultAsync(animalType => animalType.Id == updateRequest.NewTypeId);
         if (newType == null) return NotFound("New type cannot be found in the database");
 
         oldTypeRelationship.ChangeTypeTo(newType);
@@ -199,6 +199,27 @@ public class AnimalController : ControllerBase
 
         return Ok(_mapper.Map<AnimalDto>(animal));
     }
+    [HttpGet("{animalId:long}/locations")]
+    [ForbidOnIncorrectAuthorizationHeader]
+    public async Task<IActionResult> GetLocation(long animalId, [FromQuery] AnimalLocationSearchRequest request)
+    {
+        if (animalId <= 0)
+            return BadRequest("Id must be positive");
+        var animal = await _context.Animals
+            .Include(animal=>animal.VisitedLocations)
+            .FirstOrDefaultAsync(animal => animal.Id == animalId);
+        if (animal == null) return NotFound("Animal not found");
+
+
+        return Ok(animal.VisitedLocations
+            .Where(locationRelationship=>locationRelationship.DataTimeOfVisitLocationPoint >= request.StartDateTime 
+                                         &&  locationRelationship.DataTimeOfVisitLocationPoint <= request.EndDateTime)
+            .OrderBy(locationRelationship=>locationRelationship.DataTimeOfVisitLocationPoint)
+            .Skip(request.From)
+            .Take(request.Size)
+            .Select(locationRelationship=>_mapper.Map<AnimalLocationDto>(locationRelationship))
+        );
+    }
 
     [HttpPost("{animalId:long}/locations/{pointId:long}")]
     [Authorize]
@@ -219,19 +240,17 @@ public class AnimalController : ControllerBase
         if (animal.VisitedLocations.Any() && animal.VisitedLocations.Last().LocationPointId == pointId)
             return BadRequest("Animal cannot move to the current point");
 
-        var newLocation = _context.Locations.SingleOrDefault(location => location.Id == pointId);
+        var newLocation = await _context.Locations.FirstOrDefaultAsync(location => location.Id == pointId);
         if (newLocation == null) return NotFound("Location not found");
 
         var newRelationship = new AnimalAndLocationRelationship
         {
-            Id = animal.VisitedLocations.Any()
-                ? animal.VisitedLocations.Select(location => location.Id).Max() + 1
-                : 1,
             AnimalId = animalId,
             LocationPointId = pointId,
             Animal = animal,
             Location = newLocation
         };
+        
         newRelationship.InitializeRelationship();
 
         await _context.SaveChangesAsync();
@@ -247,10 +266,10 @@ public class AnimalController : ControllerBase
             return BadRequest("Id must be positive");
         if (!request.IsValid())
             return BadRequest("Some field is invalid");
-        var animal = _context.Animals
+        var animal = await _context.Animals
             .Include(animal=>animal.VisitedLocations)
             .Include(animal=>animal.ChippingLocation)
-            .SingleOrDefault(animal => animal.Id == animalId);
+            .FirstOrDefaultAsync(animal => animal.Id == animalId);
         if (animal == null) return NotFound("Animal not found");
 
         var locationTriplet = animal.VisitedLocations

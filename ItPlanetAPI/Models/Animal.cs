@@ -40,18 +40,17 @@ public class Animal
         return await GetNeededEntities(databaseContext, request.AnimalTypes, request.ChippingLocationId,
                 request.ChipperId) switch
             {
-                var (chippingAccount, chippingLocation, typesToConnectTo) => CreateFrom(request, mapper,
+                var (chippingAccount, chippingLocation, typesToConnectTo) => await CreateFrom(request, mapper,
                     chippingAccount, chippingLocation, typesToConnectTo,  databaseContext),
                 null => null
             };
     }
 
-    private static Animal CreateFrom(AnimalCreationRequest request, IMapper mapper, Account chippingAccount,
+    private static async Task<Animal> CreateFrom(AnimalCreationRequest request, IMapper mapper, Account chippingAccount,
         Location chippingLocation, List<AnimalType> typesToConnectTo, DatabaseContext databaseContext)
     {
         var animal = mapper.Map<Animal>(request);
         animal.LifeStatus = "ALIVE";
-        animal.Id = databaseContext.Animals.IsEmpty()? 1:databaseContext.Animals.Select(animal=>animal.Id).Max()+1;
         databaseContext.Animals.Add(animal);
 
         chippingAccount.ChippedAnimals.Add(animal);
