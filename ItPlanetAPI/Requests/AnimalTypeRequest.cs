@@ -6,6 +6,6 @@ public class AnimalTypeRequest
 
     public bool IsValid()
     {
-        return !string.IsNullOrEmpty(Type);
+        return !string.IsNullOrWhiteSpace(Type);
     }
 }

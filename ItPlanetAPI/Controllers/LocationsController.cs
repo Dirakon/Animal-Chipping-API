@@ -76,7 +76,7 @@ public class LocationsController : ControllerBase
         _context.Locations.Add(location);
         await _context.SaveChangesAsync();
 
-        return Ok(_mapper.Map<LocationDto>(location));
+        return new ObjectResult(_mapper.Map<LocationDto>(location)) { StatusCode = StatusCodes.Status201Created };
     }
 
     [HttpDelete("{id:long}")]

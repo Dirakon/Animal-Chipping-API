@@ -2,8 +2,8 @@ namespace ItPlanetAPI.Controllers;
 
 public class AnimalSearchRequest
 {
-    public DateTime? StartDateTime { get; set; } = DateTime.MinValue;
-    public DateTime? EndDateTime { get; set; } = DateTime.MaxValue;
+    public DateTimeOffset? StartDateTime { get; set; } = DateTimeOffset.MinValue;
+    public DateTimeOffset? EndDateTime { get; set; } = DateTimeOffset.MaxValue;
     public int? ChipperId { get; set; }
     public long? ChippingLocationId { get; set; }
     public string? LifeStatus { get; set; }

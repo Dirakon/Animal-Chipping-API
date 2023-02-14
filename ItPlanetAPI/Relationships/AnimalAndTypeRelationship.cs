@@ -2,6 +2,7 @@ namespace ItPlanetAPI.Models;
 
 public class AnimalAndTypeRelationship
 {
+    public long Id { get; set; }
     public long AnimalId { get; set; }
     public virtual Animal Animal { get; set; }
     public long TypeId { get; set; }
@@ -11,20 +12,11 @@ public class AnimalAndTypeRelationship
     public void Remove(DatabaseContext databaseContext)
     {
         databaseContext.Remove(this);
-        // Type.Animals.Remove(this);
-        // Animal.AnimalTypes.Remove(this);
-        // Animal = null;
-        // Type = null;
-        // AnimalId = -1;
-        // TypeId = -1;
     }
 
-    public void ChangeTypeTo(AnimalType newType)
+    public void ChangeTypeTo(long newTypeId)
     {
-        Type.Animals.Remove(this);
-
-        TypeId = newType.Id;
-        Type = newType;
+        TypeId = newTypeId;
     }
 
     public void InitializeRelationship()

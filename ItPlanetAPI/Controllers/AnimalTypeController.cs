@@ -73,7 +73,7 @@ public class AnimalTypeController : ControllerBase
         _context.AnimalTypes.Add(animalType);
         await _context.SaveChangesAsync();
 
-        return Ok(_mapper.Map<AnimalTypeDto>(animalType));
+        return new ObjectResult(_mapper.Map<AnimalTypeDto>(animalType)) { StatusCode = StatusCodes.Status201Created };
     }
 
     [HttpDelete("{id:long}")]

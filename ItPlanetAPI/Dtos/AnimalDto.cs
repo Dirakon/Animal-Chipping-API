@@ -13,7 +13,7 @@ public class AnimalDto
 
     public long Id { get; set; }
     public string LifeStatus { get; set; }
-    public DateTime ChippingDateTime { get; set; }
+    public DateTimeOffset ChippingDateTime { get; set; }
     public List<long> VisitedLocations { get; set; }
-    public DateTime? DeathDateTime { get; set; }
+    public DateTimeOffset? DeathDateTime { get; set; }
 }

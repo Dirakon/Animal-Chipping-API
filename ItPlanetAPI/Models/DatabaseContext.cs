@@ -21,6 +21,9 @@ public class DatabaseContext : DbContext
         InitAnimalAndTypeRelationship(modelBuilder);
         InitAnimalAndAccountRelationship(modelBuilder);
 
+        if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CONNECTION_STRING")))
+            return;
+        
         // TODO: remove (currently, test accounts for test purposes)
         modelBuilder.Entity<Account>().HasData(
             new Account {Id = 1, Email = "a@w.p", Password = "0", FirstName = "AWP", LastName = "Cool"},
@@ -62,8 +65,6 @@ public class DatabaseContext : DbContext
 
     private static void InitAnimalAndTypeRelationship(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<AnimalAndTypeRelationship>()
-            .HasKey(ao => new {ao.AnimalId, ao.TypeId});
 
         modelBuilder.Entity<AnimalAndTypeRelationship>()
             .HasOne(a => a.Type)

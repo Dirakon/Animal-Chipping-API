@@ -30,7 +30,7 @@ public class AccountsController : ControllerBase
         return Ok(
             _context.Accounts
                 .Where(account =>
-                    account.Email.Contains(searchRequest.EmailName) &&
+                    account.Email.Contains(searchRequest.Email) &&
                     account.FirstName.Contains(searchRequest.FirstName) &&
                     account.LastName.Contains(searchRequest.LastName)
                 )
@@ -81,7 +81,8 @@ public class AccountsController : ControllerBase
         return Ok(_mapper.Map<AccountDto>(oldAccount));
     }
 
-    [HttpPost("Registration")]
+    [HttpPost]
+    [Route("/Registration")]
     [AllowAnonymousOnly]
     public async Task<IActionResult> Register([FromBody] AccountCreationRequest accountCreationRequest)
     {
@@ -96,7 +97,7 @@ public class AccountsController : ControllerBase
         _context.Accounts.Add(account);
         await _context.SaveChangesAsync();
 
-        return Ok(_mapper.Map<AccountDto>(account));
+        return new ObjectResult(_mapper.Map<AccountDto>(account)) { StatusCode = StatusCodes.Status201Created };
     }
 
     [HttpDelete("{id:int}")]

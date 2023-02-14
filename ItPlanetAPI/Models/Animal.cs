@@ -30,9 +30,9 @@ public class Animal
 
     // TODO: optimize into enum
     public string LifeStatus { get; set; } = "ALIVE";
-    public DateTime ChippingDateTime { get; set; } = DateTime.Now;
+    public DateTimeOffset ChippingDateTime { get; set; } = DateTimeOffset.Now;
     public virtual ICollection<AnimalAndLocationRelationship> VisitedLocations { get; set; }
-    public DateTime? DeathDateTime { get; set; } = null;
+    public DateTimeOffset? DeathDateTime { get; set; } = null;
 
     public static async Task<Animal?> TryCreateFrom(AnimalCreationRequest request, IMapper mapper,
         DatabaseContext databaseContext)
@@ -52,11 +52,9 @@ public class Animal
         var animal = mapper.Map<Animal>(request);
         animal.LifeStatus = "ALIVE";
         databaseContext.Animals.Add(animal);
-
-        chippingAccount.ChippedAnimals.Add(animal);
+        
         animal.Chipper = chippingAccount;
 
-        chippingLocation.AnimalsChippedHere.Add(animal);
         animal.ChippingLocation = chippingLocation;
 
         foreach (var animalType in typesToConnectTo)
@@ -114,21 +112,17 @@ public class Animal
         {
             if (request.LifeStatus == "DEAD" && LifeStatus == "ALIVE")
             {
-                DeathDateTime = DateTime.Now;
+                DeathDateTime = DateTimeOffset.Now;
             }
             
-            if (Chipper != newChippingAccount)
+            if (ChipperId != newChippingAccount.Id)
             {
-                Chipper.ChippedAnimals.Remove(this);
-                newChippingAccount.ChippedAnimals.Add(this);
                 Chipper = newChippingAccount;
                 ChipperId = newChippingAccount.Id;
             }
 
-            if (ChippingLocation != newChippingLocation)
+            if (ChippingLocationId != newChippingLocation.Id)
             {
-                ChippingLocation.AnimalsChippedHere.Remove(this);
-                newChippingLocation.AnimalsChippedHere.Add(this);
                 ChippingLocation = newChippingLocation;
                 ChippingLocationId = newChippingLocation.Id;
             }
