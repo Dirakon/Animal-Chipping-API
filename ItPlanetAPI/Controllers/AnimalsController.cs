@@ -1,5 +1,7 @@
 using AutoMapper;
+using ItPlanetAPI.Dtos;
 using ItPlanetAPI.Models;
+using ItPlanetAPI.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +28,6 @@ public class AnimalsController : ControllerBase
     [HttpGet("Search")]
     public IActionResult Search([FromQuery] AnimalSearchRequest searchRequest)
     {
-        if (!searchRequest.IsValid()) return StatusCode(400);
         var query = _context
             .Animals
             .Where(animal =>
@@ -77,7 +78,6 @@ public class AnimalsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Update(long id, [FromBody] AnimalUpdateRequest animalRequest)
     {
-        if (!animalRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
 
         var oldAnimal =
@@ -101,7 +101,6 @@ public class AnimalsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Create([FromBody] AnimalCreationRequest animalRequest)
     {
-        if (!animalRequest.IsValid()) return BadRequest("Some field is invalid");
         if (animalRequest.HasConflicts()) return Conflict();
 
         if (await Animal.TryCreateFrom(animalRequest, _mapper, _context) is { } animal)

@@ -1,4 +1,6 @@
 using AutoMapper;
+using ItPlanetAPI.Relationships;
+using ItPlanetAPI.Requests;
 using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Models;

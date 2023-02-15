@@ -1,4 +1,5 @@
-using ItPlanetAPI;
+using ItPlanetAPI.Mapping;
+using ItPlanetAPI.Middleware;
 using ItPlanetAPI.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;

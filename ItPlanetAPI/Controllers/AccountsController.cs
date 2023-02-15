@@ -1,5 +1,8 @@
 using AutoMapper;
+using ItPlanetAPI.Dtos;
+using ItPlanetAPI.Middleware;
 using ItPlanetAPI.Models;
+using ItPlanetAPI.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +28,6 @@ public class AccountsController : ControllerBase
     [HttpGet("Search")]
     public IActionResult Search([FromQuery] AccountSearchRequest searchRequest)
     {
-        if (!searchRequest.IsValid()) return BadRequest("Some filed in request is invalid");
         return Ok(
             _context.Accounts
                 .Where(account =>
@@ -60,7 +62,6 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] AccountCreationRequest accountCreationRequest,
         [OpenApiParameterIgnore] int authorizedUserId)
     {
-        if (!accountCreationRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
         if (id != authorizedUserId) return Forbid();
 
@@ -83,8 +84,6 @@ public class AccountsController : ControllerBase
     [AllowAnonymousOnly]
     public async Task<IActionResult> Create([FromBody] AccountCreationRequest accountCreationRequest)
     {
-        if (!accountCreationRequest.IsValid()) return BadRequest("Some field is invalid");
-
         var emailAlreadyPresent =
             _context.Accounts.Any(accountToCheck => accountToCheck.Email == accountCreationRequest.Email);
         if (emailAlreadyPresent) return Conflict("Account with this e-mail already present");

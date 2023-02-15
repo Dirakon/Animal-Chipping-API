@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace ItPlanetAPI;
+namespace ItPlanetAPI.Middleware;
 
 public class AllowAnonymousOnly : Attribute, IAuthorizationFilter
 {

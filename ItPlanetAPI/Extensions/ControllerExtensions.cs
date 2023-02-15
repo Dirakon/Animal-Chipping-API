@@ -3,7 +3,7 @@ using ItPlanetAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace ItPlanetAPI.Controllers;
+namespace ItPlanetAPI.Extensions;
 
 public static class ControllerExtensions
 {

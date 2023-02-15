@@ -1,4 +1,4 @@
-namespace ItPlanetAPI.Models;
+namespace ItPlanetAPI.Dtos;
 
 public class AnimalDto
 {

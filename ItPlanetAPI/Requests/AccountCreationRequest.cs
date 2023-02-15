@@ -1,27 +1,15 @@
 using System.ComponentModel.DataAnnotations;
+using ItPlanetAPI.Middleware.ValidationAttributes;
 
-namespace ItPlanetAPI.Models;
+namespace ItPlanetAPI.Requests;
 
 public class AccountCreationRequest
 {
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
-    public string Password { get; set; }
+    [NonWhitespace] public string FirstName { get; set; }
 
-    public bool IsValid()
-    {
-        var allStringFields = new[] {Email, Password, FirstName, LastName};
+    [NonWhitespace] public string LastName { get; set; }
 
-        var allFieldsNonEmpty = allStringFields
-            .All(field => !string.IsNullOrWhiteSpace(field));
+    [NonWhitespace] public string Password { get; set; }
 
-        return allFieldsNonEmpty && IsValidEmail(Email);
-    }
-
-
-    private static bool IsValidEmail(string source)
-    {
-        return new EmailAddressAttribute().IsValid(source);
-    }
+    [EmailAddress] [NonWhitespace] public string Email { get; set; }
 }

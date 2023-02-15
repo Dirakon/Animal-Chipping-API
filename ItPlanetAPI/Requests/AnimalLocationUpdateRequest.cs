@@ -1,12 +1,10 @@
+using ItPlanetAPI.Middleware.ValidationAttributes;
+
 namespace ItPlanetAPI.Requests;
 
 public class AnimalLocationUpdateRequest
 {
-    public long VisitedLocationPointId { get; set; }
-    public long LocationPointId { get; set; }
+    [Positive] public long VisitedLocationPointId { get; set; }
 
-    public bool IsValid()
-    {
-        return LocationPointId > 0 && VisitedLocationPointId > 0;
-    }
+    [Positive] public long LocationPointId { get; set; }
 }

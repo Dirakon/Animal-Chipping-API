@@ -1,5 +1,7 @@
 using AutoMapper;
+using ItPlanetAPI.Dtos;
 using ItPlanetAPI.Models;
+using ItPlanetAPI.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -40,7 +42,6 @@ public class AnimalTypeController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Update(long id, [FromBody] AnimalTypeRequest animalTypeRequest)
     {
-        if (!animalTypeRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
 
         var oldAnimalType = await _context.AnimalTypes.SingleOrDefaultAsync(animalType => animalType.Id == id);
@@ -61,8 +62,6 @@ public class AnimalTypeController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Create([FromBody] AnimalTypeRequest animalTypeRequest)
     {
-        if (!animalTypeRequest.IsValid()) return BadRequest("Some field is invalid");
-
         var newTypeAlreadyPresent =
             await _context.AnimalTypes.AnyAsync(typeToCheck => typeToCheck.Type == animalTypeRequest.Type);
         if (newTypeAlreadyPresent) return Conflict("Animal type with this 'type' field already present");

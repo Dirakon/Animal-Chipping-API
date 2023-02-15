@@ -62,4 +62,9 @@ public static class LinqExtensions
         return Expression.Lambda<Func<T, bool>>(Expression.And(expression1.Body, invokedExpression),
             expression1.Parameters);
     }
+
+    public static bool HasDuplicates<T>(this IEnumerable<T> enumerable)
+    {
+        return enumerable.GroupBy(typeId => typeId).Any(g => g.Count() > 1);
+    }
 }

@@ -1,5 +1,7 @@
 using AutoMapper;
+using ItPlanetAPI.Dtos;
 using ItPlanetAPI.Models;
+using ItPlanetAPI.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +43,6 @@ public class LocationsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Update(long id, [FromBody] LocationRequest locationRequest)
     {
-        if (!locationRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
 
         var oldLocation =
@@ -62,8 +63,6 @@ public class LocationsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Create([FromBody] LocationRequest locationRequest)
     {
-        if (!locationRequest.IsValid()) return BadRequest("Some field is invalid");
-
         var coordinatesAlreadyPresent = await _context.Locations.AnyAsync(Location.IsAlmostTheSameAs(locationRequest));
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 

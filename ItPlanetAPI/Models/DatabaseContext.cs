@@ -1,3 +1,4 @@
+using ItPlanetAPI.Relationships;
 using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Models;

@@ -1,12 +1,10 @@
-namespace ItPlanetAPI.Models;
+using System.ComponentModel.DataAnnotations;
+
+namespace ItPlanetAPI.Requests;
 
 public class LocationRequest
 {
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
+    [Range(-90.0, 90.0)] public double Latitude { get; set; }
 
-    public bool IsValid()
-    {
-        return Latitude is >= -90 and <= 90 && Longitude is >= -180 and <= 180;
-    }
+    [Range(-180.0, 180.0)] public double Longitude { get; set; }
 }

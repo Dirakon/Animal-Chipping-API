@@ -1,7 +1,10 @@
 using AutoMapper;
+using ItPlanetAPI.Dtos;
 using ItPlanetAPI.Models;
+using ItPlanetAPI.Relationships;
+using ItPlanetAPI.Requests;
 
-namespace ItPlanetAPI;
+namespace ItPlanetAPI.Mapping;
 
 public class MappingProfile : Profile
 {

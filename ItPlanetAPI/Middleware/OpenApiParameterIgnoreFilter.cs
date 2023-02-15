@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace ItPlanetAPI;
+namespace ItPlanetAPI.Middleware;
 
 public class OpenApiParameterIgnoreAttribute : Attribute
 {

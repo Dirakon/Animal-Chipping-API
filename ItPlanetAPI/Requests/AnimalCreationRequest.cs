@@ -1,26 +1,34 @@
-namespace ItPlanetAPI.Models;
+using System.ComponentModel.DataAnnotations;
+using ItPlanetAPI.Extensions;
+using ItPlanetAPI.Middleware.ValidationAttributes;
 
-public class AnimalCreationRequest
+namespace ItPlanetAPI.Requests;
+
+public class AnimalCreationRequest : IValidatableObject
 {
-    public List<long> AnimalTypes { get; set; }
-    public float Weight { get; set; }
-    public float Length { get; set; }
-    public float Height { get; set; }
-    public string Gender { get; set; }
-    public int ChipperId { get; set; }
-    public long ChippingLocationId { get; set; }
+    [NonEmpty] public List<long> AnimalTypes { get; set; }
 
-    public bool IsValid()
+    [Positive] public float Weight { get; set; }
+
+    [Positive] public float Length { get; set; }
+
+    [Positive] public float Height { get; set; }
+
+    [AnimalGender] public string Gender { get; set; }
+
+    [Positive] public int ChipperId { get; set; }
+
+    [Positive] public long ChippingLocationId { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (!AnimalTypes.Any() || AnimalTypes.Any(animalType => animalType <= 0))
-            return false;
-
-        return Weight > 0 && Length > 0 && Height > 0 && Gender is "MALE" or "FEMALE" or "OTHER" &&
-               ChipperId > 0 && ChippingLocationId > 0;
+        if (AnimalTypes.Any(animalType => animalType <= 0))
+            yield return new ValidationResult("'AnimalTypes' field should contain only positive items");
     }
+
 
     public bool HasConflicts()
     {
-        return AnimalTypes.GroupBy(x => x).Any(g => g.Count() > 1);
+        return AnimalTypes.HasDuplicates();
     }
 }

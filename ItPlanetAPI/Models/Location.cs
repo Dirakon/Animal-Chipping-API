@@ -1,4 +1,6 @@
 using System.Linq.Expressions;
+using ItPlanetAPI.Relationships;
+using ItPlanetAPI.Requests;
 
 namespace ItPlanetAPI.Models;
 

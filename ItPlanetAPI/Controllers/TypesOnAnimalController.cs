@@ -1,11 +1,15 @@
 using AutoMapper;
+using ItPlanetAPI.Dtos;
 using ItPlanetAPI.Models;
+using ItPlanetAPI.Relationships;
+using ItPlanetAPI.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Controllers;
 
+[ApiController]
 [Route("Animals/{animalId:long}/Types")]
 public class TypesOnAnimalController : ControllerBase
 {
@@ -52,8 +56,6 @@ public class TypesOnAnimalController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Update(long animalId, [FromBody] AnimalTypeUpdateRequest updateRequest)
     {
-        if (!updateRequest.IsValid())
-            return BadRequest("Some field in request is invalid");
         if (animalId <= 0)
             return BadRequest("Id must be positive");
 

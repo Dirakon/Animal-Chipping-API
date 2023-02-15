@@ -1,4 +1,6 @@
-namespace ItPlanetAPI.Models;
+using ItPlanetAPI.Models;
+
+namespace ItPlanetAPI.Relationships;
 
 public class AnimalAndTypeRelationship
 {

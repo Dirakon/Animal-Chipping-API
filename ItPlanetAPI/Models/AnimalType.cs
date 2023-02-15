@@ -1,3 +1,5 @@
+using ItPlanetAPI.Relationships;
+
 namespace ItPlanetAPI.Models;
 
 public class AnimalType

@@ -1,11 +1,8 @@
-namespace ItPlanetAPI.Models;
+using ItPlanetAPI.Middleware.ValidationAttributes;
+
+namespace ItPlanetAPI.Requests;
 
 public class AnimalTypeRequest
 {
-    public string Type { get; set; }
-
-    public bool IsValid()
-    {
-        return !string.IsNullOrWhiteSpace(Type);
-    }
+    [NonWhitespace] public string Type { get; set; }
 }

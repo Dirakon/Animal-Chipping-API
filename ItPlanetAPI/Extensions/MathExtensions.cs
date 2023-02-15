@@ -1,4 +1,4 @@
-namespace ItPlanetAPI;
+namespace ItPlanetAPI.Extensions;
 
 public static class MahExtensions
 {

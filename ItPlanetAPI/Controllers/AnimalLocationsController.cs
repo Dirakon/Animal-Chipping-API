@@ -1,6 +1,8 @@
 using AutoMapper;
+using ItPlanetAPI.Dtos;
 using ItPlanetAPI.Extensions;
 using ItPlanetAPI.Models;
+using ItPlanetAPI.Relationships;
 using ItPlanetAPI.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Controllers;
 
+[ApiController]
 [Route("Animals/{animalId:long}/Locations")]
 public class AnimalLocationsController : ControllerBase
 {
@@ -57,7 +60,7 @@ public class AnimalLocationsController : ControllerBase
         if (animal == null) return NotFound("Animal not found");
 
         if (animal.LifeStatus == "DEAD") return BadRequest("Cannot move dead animal.");
-        if (pointId == animal.ChippingLocationId && !animal.VisitedLocations.Any())
+        if (pointId == animal.ChippingLocationId && animal.VisitedLocations.IsEmpty())
             return BadRequest("Animal cannot move from chipping location to chipping location");
         if (animal.VisitedLocations.Any() && animal.VisitedLocations.Last().LocationPointId == pointId)
             return BadRequest("Animal cannot move to the current point");
@@ -81,12 +84,10 @@ public class AnimalLocationsController : ControllerBase
 
     [HttpPut("")]
     [Authorize]
-    public async Task<IActionResult> Update(long animalId, [FromBody] AnimalLocationUpdateRequest request)
+    public async Task<IActionResult> Update([FromBody] AnimalLocationUpdateRequest request, long animalId)
     {
-        if (animalId <= 0)
+        if (animalId <= 0 || !ModelState.IsValid)
             return BadRequest("Id must be positive");
-        if (!request.IsValid())
-            return BadRequest("Some field is invalid");
 
         var animal = await _context.Animals
             .Include(animal => animal.VisitedLocations)
