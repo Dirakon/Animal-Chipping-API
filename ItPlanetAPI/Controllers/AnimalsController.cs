@@ -8,22 +8,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Controllers;
 
-[ApiController]
 [Route("[controller]")]
-public class AnimalsController : ControllerBase
+public class AnimalsController : BaseEntityController
 {
-    private readonly DatabaseContext _context;
-    private readonly ILogger<AnimalsController> _logger;
-
-    private readonly IMapper _mapper;
-
-    public AnimalsController(ILogger<AnimalsController> logger, DatabaseContext context, IMapper mapper)
+    public AnimalsController(ILogger<AnimalsController> logger, DatabaseContext context, IMapper mapper) : base(logger,
+        context, mapper)
     {
-        _logger = logger;
-        _context = context;
-        _mapper = mapper;
     }
-
 
     [HttpGet("Search")]
     public IActionResult Search([FromQuery] AnimalSearchRequest searchRequest)

@@ -8,20 +8,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Controllers;
 
-[ApiController]
 [Route("Animals/Types")]
-public class AnimalTypeController : ControllerBase
+public class AnimalTypeController : BaseEntityController
 {
-    private readonly DatabaseContext _context;
-    private readonly ILogger<AnimalTypeController> _logger;
-
-    private readonly IMapper _mapper;
-
-    public AnimalTypeController(ILogger<AnimalTypeController> logger, DatabaseContext context, IMapper mapper)
+    public AnimalTypeController(ILogger<AnimalTypeController> logger, DatabaseContext context, IMapper mapper) : base(
+        logger, context, mapper)
     {
-        _logger = logger;
-        _context = context;
-        _mapper = mapper;
     }
 
     [HttpGet("{id:long}")]

@@ -10,20 +10,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Controllers;
 
-[ApiController]
 [Route("Animals/{animalId:long}/Locations")]
-public class AnimalLocationsController : ControllerBase
+public class AnimalLocationsController : BaseEntityController
 {
-    private readonly DatabaseContext _context;
-    private readonly ILogger<AnimalLocationsController> _logger;
-
-    private readonly IMapper _mapper;
-
     public AnimalLocationsController(ILogger<AnimalLocationsController> logger, DatabaseContext context, IMapper mapper)
+        : base(logger, context, mapper)
     {
-        _logger = logger;
-        _context = context;
-        _mapper = mapper;
     }
 
     [HttpGet("")]

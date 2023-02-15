@@ -9,21 +9,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Controllers;
 
-[ApiController]
 [Route("[controller]")]
-public class AccountsController : ControllerBase
+public class AccountsController : BaseEntityController
 {
-    private readonly DatabaseContext _context;
-    private readonly ILogger<AccountsController> _logger;
-    private readonly IMapper _mapper;
-
-    public AccountsController(ILogger<AccountsController> logger, DatabaseContext context, IMapper mapper)
+    public AccountsController(ILogger<AccountsController> logger, DatabaseContext context, IMapper mapper) : base(
+        logger, context, mapper)
     {
-        _logger = logger;
-        _context = context;
-        _mapper = mapper;
     }
-
 
     [HttpGet("Search")]
     public IActionResult Search([FromQuery] AccountSearchRequest searchRequest)

@@ -9,20 +9,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Controllers;
 
-[ApiController]
 [Route("Animals/{animalId:long}/Types")]
-public class TypesOnAnimalController : ControllerBase
+public class TypesOnAnimalController : BaseEntityController
 {
-    private readonly DatabaseContext _context;
-    private readonly ILogger<TypesOnAnimalController> _logger;
-
-    private readonly IMapper _mapper;
-
-    public TypesOnAnimalController(ILogger<TypesOnAnimalController> logger, DatabaseContext context, IMapper mapper)
+    public TypesOnAnimalController(ILogger<TypesOnAnimalController> logger, DatabaseContext context, IMapper mapper) :
+        base(logger, context, mapper)
     {
-        _logger = logger;
-        _context = context;
-        _mapper = mapper;
     }
 
 

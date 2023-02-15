@@ -8,20 +8,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Controllers;
 
-[ApiController]
 [Route("[controller]")]
-public class LocationsController : ControllerBase
+public class LocationsController : BaseEntityController
 {
-    private readonly DatabaseContext _context;
-    private readonly ILogger<LocationsController> _logger;
-
-    private readonly IMapper _mapper;
-
-    public LocationsController(ILogger<LocationsController> logger, DatabaseContext context, IMapper mapper)
+    public LocationsController(ILogger<LocationsController> logger, DatabaseContext context, IMapper mapper) : base(
+        logger, context, mapper)
     {
-        _logger = logger;
-        _context = context;
-        _mapper = mapper;
     }
 
     [HttpGet("{id:long}")]

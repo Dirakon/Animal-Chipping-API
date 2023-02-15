@@ -4,8 +4,8 @@ namespace ItPlanetAPI.Requests;
 
 public class AnimalSearchRequest
 {
-    public DateTimeOffset? StartDateTime { get; set; } = DateTimeOffset.MinValue;
-    public DateTimeOffset? EndDateTime { get; set; } = DateTimeOffset.MaxValue;
+    public DateTimeOffset StartDateTime { get; set; } = DateTimeOffset.MinValue;
+    public DateTimeOffset EndDateTime { get; set; } = DateTimeOffset.MaxValue;
 
     [Positive(true)] public int? ChipperId { get; set; }
 
