@@ -7,7 +7,7 @@ public class AnimalAndTypeRelationship
     public virtual Animal Animal { get; set; }
     public long TypeId { get; set; }
     public virtual AnimalType Type { get; set; }
-    
+
 
     public void Remove(DatabaseContext databaseContext)
     {
@@ -20,7 +20,7 @@ public class AnimalAndTypeRelationship
     }
 
     public void InitializeRelationship()
-    { 
+    {
         Animal.AnimalTypes.Add(this);
         Type.Animals.Add(this);
     }

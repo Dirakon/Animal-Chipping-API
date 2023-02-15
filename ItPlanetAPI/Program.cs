@@ -7,8 +7,7 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => { options.Filters.Add(new ForbidOnIncorrectAuthorizationHeader()); });
 builder.Services.AddAuthentication("BasicAuthentication")
     .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 builder.Services.AddScoped<AuthorizedUser>();
@@ -46,15 +45,17 @@ builder.Services.AddSwaggerGen(option =>
 
 builder.Services.AddDbContext<DatabaseContext>(options =>
     {
-        const string defaultStr = "Server=localhost,1433;Database=chipping;Persist Security Info=True; Encrypt=False;User ID=sa;Password=YourStrong@Passw0rd;Trust Server Certificate=True;";
-        
-        var str = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
-            ? defaultStr
-            :Environment.GetEnvironmentVariable("CONNECTION_STRING");
-        
-        using var ctx = new DatabaseContext(options.UseSqlServer(str).Options);
+        const string defaultConnectionString =
+            "Server=localhost,1433;Database=chipping;Persist Security Info=True; Encrypt=False;User ID=sa;Password=YourStrong@Passw0rd;Trust Server Certificate=True;";
+
+        var connectionString = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
+            ? defaultConnectionString
+            : Environment.GetEnvironmentVariable("CONNECTION_STRING");
+
+        using var ctx = new DatabaseContext(options.UseSqlServer(connectionString).Options);
         ctx.Database.EnsureCreated();
-        
+
+        // Use to easily clear the database:
         //ctx.Database.EnsureDeleted();
     }
 );

@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace ItPlanetAPI;
 
 public static class MahExtensions

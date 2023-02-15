@@ -32,9 +32,8 @@ public class MappingProfile : Profile
                 opt => opt.MapFrom(animal => animal.AnimalTypes.Select(type => type.TypeId).ToList()))
             .ForMember(animalDto => animalDto.VisitedLocations,
                 opt => opt.MapFrom(animal => animal.VisitedLocations.Select(location => location.Id).ToList()));
-        
+
         // Animal-location relationship -> animal-location relationship DTO
         CreateMap<AnimalAndLocationRelationship, AnimalLocationDto>();
-
     }
 }

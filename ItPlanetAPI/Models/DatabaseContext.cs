@@ -23,7 +23,7 @@ public class DatabaseContext : DbContext
 
         if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CONNECTION_STRING")))
             return;
-        
+
         // TODO: remove (currently, test accounts for test purposes)
         modelBuilder.Entity<Account>().HasData(
             new Account {Id = 1, Email = "a@w.p", Password = "0", FirstName = "AWP", LastName = "Cool"},
@@ -45,7 +45,6 @@ public class DatabaseContext : DbContext
 
     private static void InitAnimalAndLocationRelationship(ModelBuilder modelBuilder)
     {
-
         modelBuilder.Entity<AnimalAndLocationRelationship>()
             .HasOne(a => a.Location)
             .WithMany(ao => ao.AnimalsVisitedHere)
@@ -65,7 +64,6 @@ public class DatabaseContext : DbContext
 
     private static void InitAnimalAndTypeRelationship(ModelBuilder modelBuilder)
     {
-
         modelBuilder.Entity<AnimalAndTypeRelationship>()
             .HasOne(a => a.Type)
             .WithMany(ao => ao.Animals)

@@ -12,9 +12,7 @@ public class AnimalUpdateRequest
 
     public bool IsValid()
     {
-        if (Weight <= 0 || Length <= 0 || Height <= 0 || Gender is not "MALE" and not "FEMALE" and not "OTHER" ||
-            ChipperId <= 0 || ChippingLocationId <= 0 || LifeStatus is not "ALIVE" and not "DEAD")
-            return false;
-        return true;
+        return Weight > 0 && Length > 0 && Height > 0 && Gender is "MALE" or "FEMALE" or "OTHER" &&
+               ChipperId > 0 && ChippingLocationId > 0 && LifeStatus is "ALIVE" or "DEAD";
     }
 }

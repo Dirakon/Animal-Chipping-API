@@ -14,8 +14,7 @@ public class AccountCreationRequest
         var allStringFields = new[] {Email, Password, FirstName, LastName};
 
         var allFieldsNonEmpty = allStringFields
-            .Select(field => field.Trim())
-            .All(field => field != "");
+            .All(field => !string.IsNullOrWhiteSpace(field));
 
         return allFieldsNonEmpty && IsValidEmail(Email);
     }

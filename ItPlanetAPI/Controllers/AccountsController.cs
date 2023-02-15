@@ -23,10 +23,9 @@ public class AccountsController : ControllerBase
 
 
     [HttpGet("Search")]
-    [ForbidOnIncorrectAuthorizationHeader]
     public IActionResult Search([FromQuery] AccountSearchRequest searchRequest)
     {
-        if (searchRequest.From < 0 || searchRequest.Size <= 0) return StatusCode(400);
+        if (!searchRequest.IsValid()) return BadRequest("Some filed in request is invalid");
         return Ok(
             _context.Accounts
                 .Where(account =>
@@ -42,7 +41,6 @@ public class AccountsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    [ForbidOnIncorrectAuthorizationHeader]
     public async Task<IActionResult> Get(int id)
     {
         if (id <= 0) return BadRequest("Id must be positive");
@@ -77,14 +75,13 @@ public class AccountsController : ControllerBase
         _mapper.Map(accountCreationRequest, oldAccount);
 
         await _context.SaveChangesAsync();
-
         return Ok(_mapper.Map<AccountDto>(oldAccount));
     }
 
     [HttpPost]
     [Route("/Registration")]
     [AllowAnonymousOnly]
-    public async Task<IActionResult> Register([FromBody] AccountCreationRequest accountCreationRequest)
+    public async Task<IActionResult> Create([FromBody] AccountCreationRequest accountCreationRequest)
     {
         if (!accountCreationRequest.IsValid()) return BadRequest("Some field is invalid");
 
@@ -93,11 +90,10 @@ public class AccountsController : ControllerBase
         if (emailAlreadyPresent) return Conflict("Account with this e-mail already present");
 
         var account = _mapper.Map<Account>(accountCreationRequest);
-
         _context.Accounts.Add(account);
         await _context.SaveChangesAsync();
 
-        return new ObjectResult(_mapper.Map<AccountDto>(account)) { StatusCode = StatusCodes.Status201Created };
+        return new ObjectResult(_mapper.Map<AccountDto>(account)) {StatusCode = StatusCodes.Status201Created};
     }
 
     [HttpDelete("{id:int}")]
@@ -110,7 +106,8 @@ public class AccountsController : ControllerBase
         if (id != authorizedUserId) return Forbid();
 
         var accountToRemove =
-            await _context.Accounts.Include(account=>account.ChippedAnimals).SingleOrDefaultAsync(account => account.Id == id);
+            await _context.Accounts.Include(account => account.ChippedAnimals)
+                .SingleOrDefaultAsync(account => account.Id == id);
         if (accountToRemove == null)
             return Forbid();
 
@@ -120,7 +117,6 @@ public class AccountsController : ControllerBase
         _context.Accounts.Remove(accountToRemove);
 
         await _context.SaveChangesAsync();
-
         return Ok();
     }
 }

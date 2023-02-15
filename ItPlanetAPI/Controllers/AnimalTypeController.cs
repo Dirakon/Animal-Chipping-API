@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ItPlanetAPI.Controllers;
 
 [ApiController]
-[Route("animals/types")]
+[Route("Animals/Types")]
 public class AnimalTypeController : ControllerBase
 {
     private readonly DatabaseContext _context;
@@ -23,7 +23,6 @@ public class AnimalTypeController : ControllerBase
     }
 
     [HttpGet("{id:long}")]
-    [ForbidOnIncorrectAuthorizationHeader]
     public async Task<IActionResult> Get(long id)
     {
         if (id <= 0) return BadRequest("Id must be positive");
@@ -39,7 +38,7 @@ public class AnimalTypeController : ControllerBase
 
     [HttpPut("{id:long}")]
     [Authorize]
-    public async Task<IActionResult> Put(long id, [FromBody] AnimalTypeRequest animalTypeRequest)
+    public async Task<IActionResult> Update(long id, [FromBody] AnimalTypeRequest animalTypeRequest)
     {
         if (!animalTypeRequest.IsValid()) return BadRequest("Some field is invalid");
         if (id <= 0) return BadRequest("Id must be positive");
@@ -55,25 +54,24 @@ public class AnimalTypeController : ControllerBase
         _mapper.Map(animalTypeRequest, oldAnimalType);
 
         await _context.SaveChangesAsync();
-
         return Ok(_mapper.Map<AnimalTypeDto>(oldAnimalType));
     }
 
     [HttpPost("")]
     [Authorize]
-    public async Task<IActionResult> Post([FromBody] AnimalTypeRequest animalTypeRequest)
+    public async Task<IActionResult> Create([FromBody] AnimalTypeRequest animalTypeRequest)
     {
         if (!animalTypeRequest.IsValid()) return BadRequest("Some field is invalid");
 
-        var newTypeAlreadyPresent =await _context.AnimalTypes.AnyAsync(typeToCheck => typeToCheck.Type == animalTypeRequest.Type);
+        var newTypeAlreadyPresent =
+            await _context.AnimalTypes.AnyAsync(typeToCheck => typeToCheck.Type == animalTypeRequest.Type);
         if (newTypeAlreadyPresent) return Conflict("Animal type with this 'type' field already present");
 
         var animalType = _mapper.Map<AnimalType>(animalTypeRequest);
-
         _context.AnimalTypes.Add(animalType);
-        await _context.SaveChangesAsync();
 
-        return new ObjectResult(_mapper.Map<AnimalTypeDto>(animalType)) { StatusCode = StatusCodes.Status201Created };
+        await _context.SaveChangesAsync();
+        return new ObjectResult(_mapper.Map<AnimalTypeDto>(animalType)) {StatusCode = StatusCodes.Status201Created};
     }
 
     [HttpDelete("{id:long}")]
@@ -83,7 +81,7 @@ public class AnimalTypeController : ControllerBase
         if (id <= 0) return BadRequest("Id must be positive");
 
         var oldAnimalType = await _context.AnimalTypes
-            .Include(animalType=>animalType.Animals)
+            .Include(animalType => animalType.Animals)
             .SingleOrDefaultAsync(animalType => animalType.Id == id);
         if (oldAnimalType == null)
             return NotFound();
@@ -94,7 +92,6 @@ public class AnimalTypeController : ControllerBase
         _context.AnimalTypes.Remove(oldAnimalType);
 
         await _context.SaveChangesAsync();
-
         return Ok();
     }
 }

@@ -1,5 +1,4 @@
 using AutoMapper;
-using ItPlanetAPI.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Models;
@@ -32,7 +31,7 @@ public class Animal
     public string LifeStatus { get; set; } = "ALIVE";
     public DateTimeOffset ChippingDateTime { get; set; } = DateTimeOffset.Now;
     public virtual ICollection<AnimalAndLocationRelationship> VisitedLocations { get; set; }
-    public DateTimeOffset? DeathDateTime { get; set; } = null;
+    public DateTimeOffset? DeathDateTime { get; set; }
 
     public static async Task<Animal?> TryCreateFrom(AnimalCreationRequest request, IMapper mapper,
         DatabaseContext databaseContext)
@@ -41,7 +40,7 @@ public class Animal
                 request.ChipperId) switch
             {
                 var (chippingAccount, chippingLocation, typesToConnectTo) => await CreateFrom(request, mapper,
-                    chippingAccount, chippingLocation, typesToConnectTo,  databaseContext),
+                    chippingAccount, chippingLocation, typesToConnectTo, databaseContext),
                 null => null
             };
     }
@@ -52,14 +51,15 @@ public class Animal
         var animal = mapper.Map<Animal>(request);
         animal.LifeStatus = "ALIVE";
         databaseContext.Animals.Add(animal);
-        
+
         animal.Chipper = chippingAccount;
 
         animal.ChippingLocation = chippingLocation;
 
         foreach (var animalType in typesToConnectTo)
         {
-            var newRelationship = new AnimalAndTypeRelationship {Animal = animal, AnimalId = animal.Id, Type = animalType, TypeId = animalType.Id};
+            var newRelationship = new AnimalAndTypeRelationship
+                {Animal = animal, AnimalId = animal.Id, Type = animalType, TypeId = animalType.Id};
             newRelationship.InitializeRelationship();
         }
 
@@ -110,11 +110,8 @@ public class Animal
 
         if (neededEntities is ({ } newChippingAccount, { } newChippingLocation, _))
         {
-            if (request.LifeStatus == "DEAD" && LifeStatus == "ALIVE")
-            {
-                DeathDateTime = DateTimeOffset.Now;
-            }
-            
+            if (request.LifeStatus == "DEAD" && LifeStatus == "ALIVE") DeathDateTime = DateTimeOffset.Now;
+
             if (ChipperId != newChippingAccount.Id)
             {
                 Chipper = newChippingAccount;
@@ -127,7 +124,7 @@ public class Animal
                 ChippingLocationId = newChippingLocation.Id;
             }
 
-            mapper.Map(request,this);
+            mapper.Map(request, this);
             return true;
         }
 
