@@ -2,7 +2,7 @@ namespace ItPlanetAPI.Dtos;
 
 public class AnimalLocationDto
 {
-    public long Id { get; set; }
-    public long LocationPointId { get; set; }
-    public DateTimeOffset DateTimeOfVisitLocationPoint { get; set; }
+    public required  long Id { get; set; }
+    public required  long LocationPointId { get; set; }
+    public required   DateTimeOffset DateTimeOfVisitLocationPoint { get; set; }
 }

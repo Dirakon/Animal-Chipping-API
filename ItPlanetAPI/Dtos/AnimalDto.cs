@@ -2,18 +2,18 @@ namespace ItPlanetAPI.Dtos;
 
 public class AnimalDto
 {
-    public List<long> AnimalTypes { get; set; }
-    public float Weight { get; set; }
-    public float Length { get; set; }
-    public float Height { get; set; }
-    public string Gender { get; set; }
-    public int ChipperId { get; set; }
-    public long ChippingLocationId { get; set; }
+    public required  List<long> AnimalTypes { get; set; }
+    public required  float Weight { get; set; }
+    public required  float Length { get; set; }
+    public required  float Height { get; set; }
+    public required  string Gender { get; set; }
+    public required  int ChipperId { get; set; }
+    public required  long ChippingLocationId { get; set; }
 
 
-    public long Id { get; set; }
-    public string LifeStatus { get; set; }
-    public DateTimeOffset ChippingDateTime { get; set; }
-    public List<long> VisitedLocations { get; set; }
-    public DateTimeOffset? DeathDateTime { get; set; }
+    public required  long Id { get; set; }
+    public required  string LifeStatus { get; set; }
+    public required  DateTimeOffset ChippingDateTime { get; set; }
+    public required  List<long> VisitedLocations { get; set; }
+    public required  DateTimeOffset? DeathDateTime { get; set; }
 }

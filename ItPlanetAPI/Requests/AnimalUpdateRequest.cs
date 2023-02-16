@@ -4,17 +4,17 @@ namespace ItPlanetAPI.Requests;
 
 public class AnimalUpdateRequest
 {
-    [Positive] public float Weight { get; set; }
+    [Positive] public required  float Weight { get; set; }
 
-    [Positive] public float Length { get; set; }
+    [Positive] public required  float Length { get; set; }
 
-    [Positive] public float Height { get; set; }
+    [Positive] public required  float Height { get; set; }
 
-    [AnimalGender] public string Gender { get; set; }
+    [AnimalGender] public required  string Gender { get; set; }
 
-    [Positive] public int ChipperId { get; set; }
+    [Positive] public required  int ChipperId { get; set; }
 
-    [Positive] public long ChippingLocationId { get; set; }
+    [Positive] public required  long ChippingLocationId { get; set; }
 
-    [AnimalLifeStatus] public string LifeStatus { get; set; }
+    [AnimalLifeStatus] public required  string LifeStatus { get; set; }
 }

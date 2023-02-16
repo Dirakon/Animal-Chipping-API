@@ -4,5 +4,5 @@ namespace ItPlanetAPI.Requests;
 
 public class AnimalTypeRequest
 {
-    [NonWhitespace] public string Type { get; set; }
+    [NonWhitespace] public required  string Type { get; set; }
 }

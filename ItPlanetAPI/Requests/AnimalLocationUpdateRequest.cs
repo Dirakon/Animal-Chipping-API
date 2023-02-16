@@ -4,7 +4,7 @@ namespace ItPlanetAPI.Requests;
 
 public class AnimalLocationUpdateRequest
 {
-    [Positive] public long VisitedLocationPointId { get; set; }
+    [Positive] public required  long VisitedLocationPointId { get; set; }
 
-    [Positive] public long LocationPointId { get; set; }
+    [Positive] public required  long LocationPointId { get; set; }
 }
