@@ -30,7 +30,7 @@ public class Animal
     public long Id { get; set; }
 
     // TODO: optimize into enum
-    public string LifeStatus { get; set; } = "ALIVE";
+    public string LifeStatus { get; set; } = AnimalLifeStatus.Alive;
     public DateTimeOffset ChippingDateTime { get; set; } = DateTimeOffset.Now;
     public virtual ICollection<AnimalAndLocationRelationship> VisitedLocations { get; set; }
     public DateTimeOffset? DeathDateTime { get; set; }
@@ -51,17 +51,20 @@ public class Animal
         Location chippingLocation, List<AnimalType> typesToConnectTo, DatabaseContext databaseContext)
     {
         var animal = mapper.Map<Animal>(request);
-        animal.LifeStatus = "ALIVE";
+        animal.LifeStatus = AnimalLifeStatus.Alive;
         databaseContext.Animals.Add(animal);
 
         animal.Chipper = chippingAccount;
 
         animal.ChippingLocation = chippingLocation;
 
-        foreach (var animalType in typesToConnectTo)
+        foreach (var newRelationship in typesToConnectTo
+                     .Select(animalType => new AnimalAndTypeRelationship
+                     {
+                         Animal = animal, AnimalId = animal.Id, Type = animalType, TypeId = animalType.Id
+                     })
+                 )
         {
-            var newRelationship = new AnimalAndTypeRelationship
-                {Animal = animal, AnimalId = animal.Id, Type = animalType, TypeId = animalType.Id};
             newRelationship.InitializeRelationship();
         }
 
@@ -97,7 +100,7 @@ public class Animal
 
     public bool IsRequestAppropriate(AnimalUpdateRequest request)
     {
-        if (LifeStatus == "DEAD" && request.LifeStatus == "ALIVE")
+        if (LifeStatus == AnimalLifeStatus.Dead && request.LifeStatus == AnimalLifeStatus.Alive)
             return false;
         if (VisitedLocations.Any() && VisitedLocations.First().LocationPointId == request.ChippingLocationId)
             return false;
@@ -110,26 +113,24 @@ public class Animal
         var neededEntities = await GetNeededEntities(databaseContext, null, chipperId: request.ChipperId,
             chippingLocationId: request.ChippingLocationId);
 
-        if (neededEntities is ({ } newChippingAccount, { } newChippingLocation, _))
+        if (neededEntities is not ({ } newChippingAccount, { } newChippingLocation, _)) return false;
+        
+        if (request.LifeStatus == AnimalLifeStatus.Dead && LifeStatus == AnimalLifeStatus.Alive) DeathDateTime = DateTimeOffset.Now;
+
+        if (ChipperId != newChippingAccount.Id)
         {
-            if (request.LifeStatus == "DEAD" && LifeStatus == "ALIVE") DeathDateTime = DateTimeOffset.Now;
-
-            if (ChipperId != newChippingAccount.Id)
-            {
-                Chipper = newChippingAccount;
-                ChipperId = newChippingAccount.Id;
-            }
-
-            if (ChippingLocationId != newChippingLocation.Id)
-            {
-                ChippingLocation = newChippingLocation;
-                ChippingLocationId = newChippingLocation.Id;
-            }
-
-            mapper.Map(request, this);
-            return true;
+            Chipper = newChippingAccount;
+            ChipperId = newChippingAccount.Id;
         }
 
-        return false;
+        if (ChippingLocationId != newChippingLocation.Id)
+        {
+            ChippingLocation = newChippingLocation;
+            ChippingLocationId = newChippingLocation.Id;
+        }
+
+        mapper.Map(request, this);
+        return true;
+
     }
 }

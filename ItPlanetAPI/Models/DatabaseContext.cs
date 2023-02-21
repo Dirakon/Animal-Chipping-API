@@ -34,10 +34,6 @@ public class DatabaseContext : DbContext
             new AnimalType {Id = 1, Type = "Doggie"},
             new AnimalType {Id = 2, Type = "Kitty"}
         );
-        // modelBuilder.Entity<Animal>().HasData(
-        //     new Animal()
-        //         {AnimalTypes = new List<long>{1,2}, ChipperId = 1, ChipperLocationId = 1, Gender = "Male", Height = 169,Length = 2, Weight = 2, Id = 1}
-        // );
         modelBuilder.Entity<Location>().HasData(
             new Location {Id = 1, Longitude = 69, Latitude = 69},
             new Location {Id = 2, Longitude = -69, Latitude = -69}

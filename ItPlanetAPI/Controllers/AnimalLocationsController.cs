@@ -51,7 +51,7 @@ public class AnimalLocationsController : BaseEntityController
             .FirstOrDefaultAsync(animal => animal.Id == animalId);
         if (animal == null) return NotFound("Animal not found");
 
-        if (animal.LifeStatus == "DEAD") return BadRequest("Cannot move dead animal.");
+        if (animal.LifeStatus == AnimalLifeStatus.Dead) return BadRequest("Cannot move dead animal.");
         if (pointId == animal.ChippingLocationId && animal.VisitedLocations.IsEmpty())
             return BadRequest("Animal cannot move from chipping location to chipping location");
         if (animal.VisitedLocations.Any() && animal.VisitedLocations.Last().LocationPointId == pointId)
@@ -78,7 +78,7 @@ public class AnimalLocationsController : BaseEntityController
     [Authorize]
     public async Task<IActionResult> Update([FromBody] AnimalLocationUpdateRequest request, long animalId)
     {
-        if (animalId <= 0 || !ModelState.IsValid)
+        if (animalId <= 0)
             return BadRequest("Id must be positive");
 
         var animal = await _context.Animals

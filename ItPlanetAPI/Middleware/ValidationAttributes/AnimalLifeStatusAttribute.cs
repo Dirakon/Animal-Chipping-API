@@ -10,7 +10,7 @@ public class AnimalLifeStatusAttribute : ValidationAttribute
     public AnimalLifeStatusAttribute(bool allowNull = false)
     {
         _allowNull = allowNull;
-        ErrorMessage = "{0} should be either 'ALIVE' or 'DEAD'";
+        ErrorMessage = $"{0} should be either '{AnimalLifeStatus.Alive}' or '{AnimalLifeStatus.Dead}'";
     }
 
 

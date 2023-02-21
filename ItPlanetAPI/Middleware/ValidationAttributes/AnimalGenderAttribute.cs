@@ -10,7 +10,7 @@ public class AnimalGenderAttribute : ValidationAttribute
     public AnimalGenderAttribute(bool allowNull = false)
     {
         _allowNull = allowNull;
-        ErrorMessage = "{0} should be either 'MALE', 'FEMALE' or 'OTHER'";
+        ErrorMessage = $"{0} should be either '{AnimalGender.Male}', '{AnimalGender.Female}' or '{AnimalGender.Other}'";
     }
 
 
