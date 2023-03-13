@@ -46,13 +46,10 @@ builder.Services.AddSwaggerGen(option =>
 
 builder.Services.AddDbContext<DatabaseContext>(options =>
     {
-        const string defaultConnectionString =
-            "Server=localhost,1433;Database=chipping;Persist Security Info=True; Encrypt=False;User ID=sa;Password=YourStrong@Passw0rd;Trust Server Certificate=True;";
 
         var connectionString = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
-            ? defaultConnectionString
-            : Environment.GetEnvironmentVariable("CONNECTION_STRING");
-
+            ? Environment.GetEnvironmentVariable("DEFAULT_CONNECTION_STRING")!
+            : Environment.GetEnvironmentVariable("CONNECTION_STRING")!;
         using var ctx = new DatabaseContext(options.UseSqlServer(connectionString).Options);
         ctx.Database.EnsureCreated();
 
