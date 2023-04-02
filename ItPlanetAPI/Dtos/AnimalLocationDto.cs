@@ -1,8 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ItPlanetAPI.Dtos;
 
 public class AnimalLocationDto
 {
-    public required  long Id { get; set; }
-    public required  long LocationPointId { get; set; }
-    public required   DateTimeOffset DateTimeOfVisitLocationPoint { get; set; }
+    [Required] public long Id { get; set; }
+    [Required] public long LocationPointId { get; set; }
+    [Required] public DateTimeOffset DateTimeOfVisitLocationPoint { get; set; }
 }

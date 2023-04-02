@@ -46,11 +46,10 @@ builder.Services.AddSwaggerGen(option =>
 
 builder.Services.AddDbContext<DatabaseContext>(options =>
     {
-
         var connectionString = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
             ? Environment.GetEnvironmentVariable("DEFAULT_CONNECTION_STRING")!
             : Environment.GetEnvironmentVariable("CONNECTION_STRING")!;
-        using var ctx = new DatabaseContext(options.UseSqlServer(connectionString).Options);
+        using var ctx = new DatabaseContext(options.UseNpgsql(connectionString).Options);
         ctx.Database.EnsureCreated();
 
         // Use to easily clear the database:

@@ -23,9 +23,9 @@ public class AccountsController : BaseEntityController
         return Ok(
             _context.Accounts
                 .Where(account =>
-                    account.Email.Contains(searchRequest.Email) &&
-                    account.FirstName.Contains(searchRequest.FirstName) &&
-                    account.LastName.Contains(searchRequest.LastName)
+                    account.Email.ToLower().Contains(searchRequest.Email.ToLower()) &&
+                    account.FirstName.ToLower().Contains(searchRequest.FirstName.ToLower()) &&
+                    account.LastName.ToLower().Contains(searchRequest.LastName.ToLower())
                 )
                 .OrderBy(account => account.Id)
                 .Skip(searchRequest.From)

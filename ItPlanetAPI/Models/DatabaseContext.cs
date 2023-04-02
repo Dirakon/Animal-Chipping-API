@@ -21,7 +21,6 @@ public class DatabaseContext : DbContext
         InitAnimalAndLocationRelationship(modelBuilder);
         InitAnimalAndTypeRelationship(modelBuilder);
         InitAnimalAndAccountRelationship(modelBuilder);
-
     }
 
     private static void InitAnimalAndLocationRelationship(ModelBuilder modelBuilder)

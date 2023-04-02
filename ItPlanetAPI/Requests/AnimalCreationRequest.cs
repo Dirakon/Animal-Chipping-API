@@ -6,19 +6,19 @@ namespace ItPlanetAPI.Requests;
 
 public class AnimalCreationRequest : IValidatableObject
 {
-    [NonEmpty] public required  List<long> AnimalTypes { get; set; }
+    [Required] [NonEmpty] public List<long> AnimalTypes { get; set; }
 
-    [Positive] public required  float Weight { get; set; }
+    [Required] [Positive] public float Weight { get; set; }
 
-    [Positive] public required  float Length { get; set; }
+    [Required] [Positive] public float Length { get; set; }
 
-    [Positive] public required  float Height { get; set; }
+    [Required] [Positive] public float Height { get; set; }
 
-    [AnimalGender] public required  string Gender { get; set; }
+    [Required] [AnimalGender] public string Gender { get; set; }
 
-    [Positive] public required  int ChipperId { get; set; }
+    [Required] [Positive] public int ChipperId { get; set; }
 
-    [Positive] public required  long ChippingLocationId { get; set; }
+    [Required] [Positive] public long ChippingLocationId { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

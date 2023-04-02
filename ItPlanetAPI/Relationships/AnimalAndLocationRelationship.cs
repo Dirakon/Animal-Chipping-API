@@ -1,3 +1,4 @@
+using ItPlanetAPI.Extensions;
 using ItPlanetAPI.Models;
 
 namespace ItPlanetAPI.Relationships;
@@ -9,7 +10,7 @@ public class AnimalAndLocationRelationship
     public virtual Animal Animal { get; set; }
     public long LocationPointId { get; set; }
     public virtual Location Location { get; set; }
-    public DateTimeOffset DateTimeOfVisitLocationPoint { get; set; } = DateTimeOffset.Now;
+    public DateTimeOffset DateTimeOfVisitLocationPoint { get; set; } = DateTimeOffset.Now.AsWholeSeconds();
 
     public void ChangeLocationTo(long newLocationId)
     {

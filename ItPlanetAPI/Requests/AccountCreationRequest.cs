@@ -5,11 +5,14 @@ namespace ItPlanetAPI.Requests;
 
 public class AccountCreationRequest
 {
-    [NonWhitespace] public required  string FirstName { get; set; }
+    [Required] [NonWhitespace] public string FirstName { get; set; }
 
-    [NonWhitespace] public required  string LastName { get; set; }
+    [Required] [NonWhitespace] public string LastName { get; set; }
 
-    [NonWhitespace] public required  string Password { get; set; }
+    [Required] [NonWhitespace] public string Password { get; set; }
 
-    [EmailAddress] [NonWhitespace] public required  string Email { get; set; }
+    [Required]
+    [EmailAddress]
+    [NonWhitespace]
+    public string Email { get; set; }
 }

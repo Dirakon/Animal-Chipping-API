@@ -1,20 +1,21 @@
+using System.ComponentModel.DataAnnotations;
 using ItPlanetAPI.Middleware.ValidationAttributes;
 
 namespace ItPlanetAPI.Requests;
 
 public class AnimalUpdateRequest
 {
-    [Positive] public required  float Weight { get; set; }
+    [Required] [Positive] public float Weight { get; set; }
 
-    [Positive] public required  float Length { get; set; }
+    [Required] [Positive] public float Length { get; set; }
 
-    [Positive] public required  float Height { get; set; }
+    [Required] [Positive] public float Height { get; set; }
 
-    [AnimalGender] public required  string Gender { get; set; }
+    [Required] [AnimalGender] public string Gender { get; set; }
 
-    [Positive] public required  int ChipperId { get; set; }
+    [Required] [Positive] public int ChipperId { get; set; }
 
-    [Positive] public required  long ChippingLocationId { get; set; }
+    [Required] [Positive] public long ChippingLocationId { get; set; }
 
-    [AnimalLifeStatus] public required  string LifeStatus { get; set; }
+    [Required] [AnimalLifeStatus] public string LifeStatus { get; set; }
 }

@@ -1,7 +1,9 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ItPlanetAPI.Dtos;
 
 public class AnimalTypeDto
 {
-    public required  string Type { get; set; }
-    public required  long Id { get; set; }
+    [Required] public string Type { get; set; }
+    [Required] public long Id { get; set; }
 }

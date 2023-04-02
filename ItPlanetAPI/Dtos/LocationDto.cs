@@ -1,8 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ItPlanetAPI.Dtos;
 
 public class LocationDto
 {
-    public required  double Latitude { get; set; }
-    public required  double Longitude { get; set; }
-    public required  long Id { get; set; }
+    [Required] public double Latitude { get; set; }
+    [Required] public double Longitude { get; set; }
+    [Required] public long Id { get; set; }
 }

@@ -1,4 +1,5 @@
 using AutoMapper;
+using ItPlanetAPI.Extensions;
 using ItPlanetAPI.Relationships;
 using ItPlanetAPI.Requests;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +32,7 @@ public class Animal
 
     // TODO: optimize into enum
     public string LifeStatus { get; set; } = AnimalLifeStatus.Alive;
-    public DateTimeOffset ChippingDateTime { get; set; } = DateTimeOffset.Now;
+    public DateTimeOffset ChippingDateTime { get; set; } = DateTimeOffset.Now.AsWholeSeconds();
     public virtual ICollection<AnimalAndLocationRelationship> VisitedLocations { get; set; }
     public DateTimeOffset? DeathDateTime { get; set; }
 
@@ -63,10 +64,8 @@ public class Animal
                      {
                          Animal = animal, AnimalId = animal.Id, Type = animalType, TypeId = animalType.Id
                      })
-                 )
-        {
+                )
             newRelationship.InitializeRelationship();
-        }
 
         return animal;
     }
@@ -114,8 +113,9 @@ public class Animal
             chippingLocationId: request.ChippingLocationId);
 
         if (neededEntities is not ({ } newChippingAccount, { } newChippingLocation, _)) return false;
-        
-        if (request.LifeStatus == AnimalLifeStatus.Dead && LifeStatus == AnimalLifeStatus.Alive) DeathDateTime = DateTimeOffset.Now;
+
+        if (request.LifeStatus == AnimalLifeStatus.Dead && LifeStatus == AnimalLifeStatus.Alive)
+            DeathDateTime = DateTimeOffset.Now.AsWholeSeconds();
 
         if (ChipperId != newChippingAccount.Id)
         {
@@ -131,6 +131,5 @@ public class Animal
 
         mapper.Map(request, this);
         return true;
-
     }
 }

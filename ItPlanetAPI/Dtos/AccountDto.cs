@@ -1,9 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ItPlanetAPI.Dtos;
 
 public class AccountDto
 {
-    public required  string FirstName { get; set; }
-    public required  string LastName { get; set; }
-    public required  string Email { get; set; }
-    public required  int Id { get; set; }
+    [Required] public string FirstName { get; set; }
+    [Required] public string LastName { get; set; }
+    [Required] public string Email { get; set; }
+    [Required] public int Id { get; set; }
 }

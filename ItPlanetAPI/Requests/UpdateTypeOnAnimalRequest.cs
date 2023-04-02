@@ -1,10 +1,11 @@
+using System.ComponentModel.DataAnnotations;
 using ItPlanetAPI.Middleware.ValidationAttributes;
 
 namespace ItPlanetAPI.Requests;
 
 public class AnimalTypeUpdateRequest
 {
-    [Positive] public required  long OldTypeId { get; set; }
+    [Required] [Positive] public long OldTypeId { get; set; }
 
-    [Positive] public required  long NewTypeId { get; set; }
+    [Required] [Positive] public long NewTypeId { get; set; }
 }
