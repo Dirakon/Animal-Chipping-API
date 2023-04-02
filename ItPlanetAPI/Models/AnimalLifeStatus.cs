@@ -1,11 +1,11 @@
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
+
 namespace ItPlanetAPI.Models;
 
-public static class AnimalLifeStatus
+[JsonConverter(typeof(JsonStringEnumMemberConverter))]
+public enum AnimalLifeStatus
 {
-    public const string Alive = "ALIVE", Dead = "DEAD";
-
-    public static bool IsValid(string gender)
-    {
-        return gender is Alive or Dead;
-    }
+    [EnumMember(Value = "ALIVE")] Alive,
+    [EnumMember(Value = "DEAD")] Dead
 }

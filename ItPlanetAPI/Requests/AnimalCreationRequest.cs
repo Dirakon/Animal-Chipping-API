@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using ItPlanetAPI.Extensions;
 using ItPlanetAPI.Middleware.ValidationAttributes;
+using ItPlanetAPI.Models;
 
 namespace ItPlanetAPI.Requests;
 
@@ -14,7 +15,7 @@ public class AnimalCreationRequest : IValidatableObject
 
     [Required] [Positive] public float Height { get; set; }
 
-    [Required] [AnimalGender] public string Gender { get; set; }
+    [Required] public AnimalGender Gender { get; set; }
 
     [Required] [Positive] public int ChipperId { get; set; }
 

@@ -1,4 +1,5 @@
 using ItPlanetAPI.Middleware.ValidationAttributes;
+using ItPlanetAPI.Models;
 
 namespace ItPlanetAPI.Requests;
 
@@ -11,9 +12,9 @@ public class AnimalSearchRequest
 
     [Positive(true)] public long? ChippingLocationId { get; set; }
 
-    [AnimalLifeStatus(true)] public string? LifeStatus { get; set; }
+    public AnimalLifeStatus? LifeStatus { get; set; }
 
-    [AnimalGender(true)] public string? Gender { get; set; }
+    public AnimalGender? Gender { get; set; }
 
     [NonNegative] public int From { get; set; } = 0;
 

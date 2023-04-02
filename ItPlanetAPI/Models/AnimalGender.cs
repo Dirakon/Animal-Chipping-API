@@ -1,11 +1,12 @@
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
+
 namespace ItPlanetAPI.Models;
 
-public static class AnimalGender
+[JsonConverter(typeof(JsonStringEnumMemberConverter))]
+public enum AnimalGender
 {
-    public const string Male = "MALE", Female = "FEMALE", Other = "OTHER";
-
-    public static bool IsValid(string gender)
-    {
-        return gender is Male or Female or Other;
-    }
+    [EnumMember(Value = "MALE")] Male,
+    [EnumMember(Value = "FEMALE")] Female,
+    [EnumMember(Value = "OTHER")] Other
 }

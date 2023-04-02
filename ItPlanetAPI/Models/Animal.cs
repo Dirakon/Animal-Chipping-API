@@ -20,8 +20,7 @@ public class Animal
 
     public float Height { get; set; }
 
-    // TODO: optimize into enum
-    public string Gender { get; set; }
+    public AnimalGender Gender { get; set; }
     public int ChipperId { get; set; }
     public virtual Account Chipper { get; set; }
     public long ChippingLocationId { get; set; }
@@ -30,8 +29,7 @@ public class Animal
 
     public long Id { get; set; }
 
-    // TODO: optimize into enum
-    public string LifeStatus { get; set; } = AnimalLifeStatus.Alive;
+    public AnimalLifeStatus LifeStatus { get; set; } = AnimalLifeStatus.Alive;
     public DateTimeOffset ChippingDateTime { get; set; } = DateTimeOffset.Now.AsWholeSeconds();
     public virtual ICollection<AnimalAndLocationRelationship> VisitedLocations { get; set; }
     public DateTimeOffset? DeathDateTime { get; set; }
