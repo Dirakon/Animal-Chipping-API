@@ -4,7 +4,7 @@ using ItPlanetAPI.Requests;
 
 namespace ItPlanetAPI.Models;
 
-public class Location
+public class Location : ISpatial
 {
     public Location()
     {
@@ -18,12 +18,4 @@ public class Location
     public virtual ICollection<AnimalAndLocationRelationship> AnimalsVisitedHere { get; set; }
     public virtual ICollection<Animal> AnimalsChippedHere { get; set; }
 
-    public static Expression<Func<Location, bool>> IsAlmostTheSameAs(LocationRequest request)
-    {
-        const double epsilon = 0.0001;
-        return current => request.Latitude - current.Latitude < epsilon &&
-                          -request.Latitude + current.Latitude < epsilon &&
-                          request.Longitude - current.Longitude < epsilon &&
-                          -request.Longitude + current.Longitude < epsilon;
-    }
 }

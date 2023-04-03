@@ -1,5 +1,6 @@
 using AutoMapper;
 using ItPlanetAPI.Dtos;
+using ItPlanetAPI.Extensions;
 using ItPlanetAPI.Models;
 using ItPlanetAPI.Requests;
 using Microsoft.AspNetCore.Authorization;
@@ -8,10 +9,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ItPlanetAPI.Controllers;
 
-[Route("[controller]")]
-public class LocationsController : BaseEntityController
+[Microsoft.AspNetCore.Components.Route("[controller]")]
+public class AreaController : BaseEntityController
 {
-    public LocationsController(ILogger<LocationsController> logger, DatabaseContext context, IMapper mapper) : base(
+    public AreaController(ILogger<AreaController> logger, DatabaseContext context, IMapper mapper) : base(
         logger, context, mapper)
     {
     }
@@ -52,17 +53,22 @@ public class LocationsController : BaseEntityController
     }
 
     [HttpPost("")]
-    [Authorize]
-    public async Task<IActionResult> Create([FromBody] LocationRequest locationRequest)
+    [Authorize(Roles = nameof(AccountRole.Admin))]
+    public async Task<IActionResult> Create([FromBody] AreaCreationRequest areaRequest)
     {
-        var coordinatesAlreadyPresent = await _context.Locations.AnyAsync(ISpatialExtensions.IsAlmostTheSameAs(locationRequest));
-        if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
-
-        var location = _mapper.Map<Location>(locationRequest);
-        _context.Locations.Add(location);
-
-        await _context.SaveChangesAsync();
-        return new ObjectResult(_mapper.Map<LocationDto>(location)) {StatusCode = StatusCodes.Status201Created};
+        var otherAreas = await _context.Areas.ToListAsync();
+        var thisAreaPolygon = areaRequest.AreaPoints.AsPolygon();
+        if (otherAreas.Any(otherArea => otherArea.AsPolygon().Intersects(thisAreaPolygon)))
+            return BadRequest("The area intersects with another existing area");
+        // var coordinatesAlreadyPresent = await _context.Locations.AnyAsync(ISpatialExtensions.IsAlmostTheSameAs(locationRequest));
+        // if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
+        //
+        // var location = _mapper.Map<Location>(locationRequest);
+        // _context.Locations.Add(location);
+        //
+        // await _context.SaveChangesAsync();
+        // return new ObjectResult(_mapper.Map<LocationDto>(location)) {StatusCode = StatusCodes.Status201Created};
+        return BadRequest("YA DID IT BRO");
     }
 
     [HttpDelete("{id:long}")]
