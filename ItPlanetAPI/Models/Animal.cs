@@ -30,7 +30,7 @@ public class Animal
     public long Id { get; set; }
 
     public AnimalLifeStatus LifeStatus { get; set; } = AnimalLifeStatus.Alive;
-    public DateTimeOffset ChippingDateTime { get; set; } = DateTimeOffset.Now.AsWholeSeconds();
+    public DateTimeOffset ChippingDateTime { get; set; } = DateTimeOffset.Now.AsWholeMilliseconds();
     public virtual ICollection<AnimalAndLocationRelationship> VisitedLocations { get; set; }
     public DateTimeOffset? DeathDateTime { get; set; }
 
@@ -113,7 +113,7 @@ public class Animal
         if (neededEntities is not ({ } newChippingAccount, { } newChippingLocation, _)) return false;
 
         if (request.LifeStatus == AnimalLifeStatus.Dead && LifeStatus == AnimalLifeStatus.Alive)
-            DeathDateTime = DateTimeOffset.Now.AsWholeSeconds();
+            DeathDateTime = DateTimeOffset.Now.AsWholeMilliseconds();
 
         if (ChipperId != newChippingAccount.Id)
         {

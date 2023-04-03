@@ -6,23 +6,22 @@ namespace ItPlanetAPI.Models;
 public interface ISpatial
 {
     public double Longitude { get; }
-    public double Latitude { get;  }
+    public double Latitude { get; }
 }
 
 public static class ISpatialExtensions
 {
-    
-    public static bool IsAlmostTheSameAs(this ISpatial first,ISpatial second)
+    public static bool IsAlmostTheSameAs(this ISpatial first, ISpatial second)
     {
         return IsAlmostTheSameAs(second).Compile().Invoke(first);
     }
 
     public static Vector2d AsVector(this ISpatial spatial)
     {
-        return new(spatial.Latitude, spatial.Longitude);
+        return new Vector2d(spatial.Latitude, spatial.Longitude);
     }
 
-    
+
     public static Expression<Func<ISpatial, bool>> IsAlmostTheSameAs(ISpatial other)
     {
         const double epsilon = 0.0001;

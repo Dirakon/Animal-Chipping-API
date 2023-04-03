@@ -1,5 +1,6 @@
 using AutoMapper;
 using ItPlanetAPI.Dtos;
+using ItPlanetAPI.Middleware.ValidationAttributes;
 using ItPlanetAPI.Models;
 using ItPlanetAPI.Relationships;
 using ItPlanetAPI.Requests;
@@ -20,11 +21,8 @@ public class TypesOnAnimalController : BaseEntityController
 
     [HttpPost("{typeId:long}")]
     [Authorize]
-    public async Task<IActionResult> Create(long typeId, long animalId)
+    public async Task<IActionResult> Create([Positive] long typeId, [Positive] long animalId)
     {
-        if (typeId <= 0 || animalId <= 0)
-            return BadRequest("Id must be positive");
-
         var animal = await _context.Animals
             .Include(animal => animal.AnimalTypes)
             .FirstOrDefaultAsync(animal => animal.Id == animalId);
@@ -46,11 +44,8 @@ public class TypesOnAnimalController : BaseEntityController
 
     [HttpPut("")]
     [Authorize]
-    public async Task<IActionResult> Update(long animalId, [FromBody] AnimalTypeUpdateRequest updateRequest)
+    public async Task<IActionResult> Update([Positive] long animalId, [FromBody] AnimalTypeUpdateRequest updateRequest)
     {
-        if (animalId <= 0)
-            return BadRequest("Id must be positive");
-
         var animal = await _context.Animals
             .Include(animal => animal.AnimalTypes)
             .FirstOrDefaultAsync(animal => animal.Id == animalId);
@@ -74,11 +69,8 @@ public class TypesOnAnimalController : BaseEntityController
 
     [HttpDelete("{typeId:long}")]
     [Authorize]
-    public async Task<IActionResult> Delete(long animalId, long typeId)
+    public async Task<IActionResult> Delete([Positive] long animalId, [Positive] long typeId)
     {
-        if (typeId <= 0 || animalId <= 0)
-            return BadRequest("Id must be positive");
-
         var animal = await _context.Animals
             .Include(animal => animal.AnimalTypes)
             .FirstOrDefaultAsync(animal => animal.Id == animalId);

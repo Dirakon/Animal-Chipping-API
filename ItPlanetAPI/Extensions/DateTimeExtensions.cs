@@ -13,4 +13,9 @@ public static class DateTimeExtensions
     {
         return dateTime.Truncate(TimeSpan.FromSeconds(1));
     }
+
+    public static DateTimeOffset AsWholeMilliseconds(this DateTimeOffset dateTime)
+    {
+        return dateTime.Truncate(TimeSpan.FromMilliseconds(1));
+    }
 }

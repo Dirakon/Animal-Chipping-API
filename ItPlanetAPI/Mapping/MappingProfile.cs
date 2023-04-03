@@ -10,7 +10,13 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        // Account request -> account -> account DTO
+        // Account registration -> account creation -> account -> account DTO
+        CreateMap<AccountRegistrationRequest, AccountCreationRequest>()
+            .ForMember(
+                request => request.Role,
+                // After registration, default role is USER
+                options => options.MapFrom(_ => AccountRole.User)
+            );
         CreateMap<AccountCreationRequest, Account>();
         CreateMap<Account, AccountDto>();
 
@@ -27,16 +33,26 @@ public class MappingProfile : Profile
 
         // Animal request (update/creation) -> animal -> animal DTO
         CreateMap<AnimalCreationRequest, Animal>()
-            .ForSourceMember(request => request.AnimalTypes, opt => opt.DoNotValidate())
-            .ForMember(animal => animal.AnimalTypes, opt => opt.Ignore());
+            .ForSourceMember(request => request.AnimalTypes, options => options.DoNotValidate())
+            .ForMember(animal => animal.AnimalTypes, options => options.Ignore());
         CreateMap<AnimalUpdateRequest, Animal>();
         CreateMap<Animal, AnimalDto>()
             .ForMember(animalDto => animalDto.AnimalTypes,
-                opt => opt.MapFrom(animal => animal.AnimalTypes.Select(type => type.TypeId).ToList()))
+                options => options.MapFrom(animal => animal.AnimalTypes.Select(type => type.TypeId).ToList()))
             .ForMember(animalDto => animalDto.VisitedLocations,
-                opt => opt.MapFrom(animal => animal.VisitedLocations.Select(location => location.Id).ToList()));
+                options => options.MapFrom(animal => animal.VisitedLocations.Select(location => location.Id).ToList()));
 
         // Animal-location relationship -> animal-location relationship DTO
         CreateMap<AnimalAndLocationRelationship, AnimalLocationDto>();
+
+        // Area request -> area -> area Dto
+        CreateMap<AreaRequest, Area>()
+            .ForSourceMember(request => request.AreaPoints, opt => opt.DoNotValidate())
+            .ForMember(animal => animal.AreaPoints, opt => opt.Ignore());
+        CreateMap<Area, AreaDto>();
+
+        // Area point creation request -> area point -> area point DTO
+        CreateMap<AreaPointCreationRequest, AreaPoint>();
+        CreateMap<AreaPoint, AreaPointDto>();
     }
 }

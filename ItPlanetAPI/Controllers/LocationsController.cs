@@ -1,5 +1,6 @@
 using AutoMapper;
 using ItPlanetAPI.Dtos;
+using ItPlanetAPI.Middleware.ValidationAttributes;
 using ItPlanetAPI.Models;
 using ItPlanetAPI.Requests;
 using Microsoft.AspNetCore.Authorization;
@@ -17,10 +18,8 @@ public class LocationsController : BaseEntityController
     }
 
     [HttpGet("{id:long}")]
-    public async Task<IActionResult> Get(long id)
+    public async Task<IActionResult> Get([Positive] long id)
     {
-        if (id <= 0) return BadRequest("Id must be positive");
-
         var locationSearchedFor =
             await _context.Locations.FirstOrDefaultAsync(animalLocation => animalLocation.Id == id);
 
@@ -33,16 +32,15 @@ public class LocationsController : BaseEntityController
 
     [HttpPut("{id:long}")]
     [Authorize]
-    public async Task<IActionResult> Update(long id, [FromBody] LocationRequest locationRequest)
+    public async Task<IActionResult> Update([Positive] long id, [FromBody] LocationRequest locationRequest)
     {
-        if (id <= 0) return BadRequest("Id must be positive");
-
         var oldLocation =
             await _context.Locations.SingleOrDefaultAsync(animalLocation => animalLocation.Id == id);
         if (oldLocation == null)
             return NotFound();
 
-        var coordinatesAlreadyPresent = await _context.Locations.AnyAsync(ISpatialExtensions.IsAlmostTheSameAs(locationRequest));
+        var coordinatesAlreadyPresent =
+            await _context.Locations.AnyAsync(ISpatialExtensions.IsAlmostTheSameAs(locationRequest));
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 
         _mapper.Map(locationRequest, oldLocation);
@@ -55,7 +53,8 @@ public class LocationsController : BaseEntityController
     [Authorize]
     public async Task<IActionResult> Create([FromBody] LocationRequest locationRequest)
     {
-        var coordinatesAlreadyPresent = await _context.Locations.AnyAsync(ISpatialExtensions.IsAlmostTheSameAs(locationRequest));
+        var coordinatesAlreadyPresent =
+            await _context.Locations.AnyAsync(ISpatialExtensions.IsAlmostTheSameAs(locationRequest));
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 
         var location = _mapper.Map<Location>(locationRequest);
@@ -67,10 +66,8 @@ public class LocationsController : BaseEntityController
 
     [HttpDelete("{id:long}")]
     [Authorize]
-    public async Task<IActionResult> Delete(long id)
+    public async Task<IActionResult> Delete([Positive] long id)
     {
-        if (id <= 0) return BadRequest("Id must be positive");
-
         var oldLocation =
             await _context.Locations
                 .Include(location => location.AnimalsChippedHere)

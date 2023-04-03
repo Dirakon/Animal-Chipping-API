@@ -34,6 +34,12 @@ public static class LinqExtensions
         return null;
     }
 
+    public static async Task<IEnumerable<TResult>> SelectAsync<TSource, TResult>(
+        this IEnumerable<TSource> source, Func<TSource, Task<TResult>> method)
+    {
+        return await Task.WhenAll(source.Select(async s => await method(s)));
+    }
+
     public static IEnumerable<T> NotNull<T>(this IEnumerable<T?> enumerable) where T : struct
     {
         return enumerable.Where(e => e != null).Select(e => e!.Value);

@@ -1,6 +1,7 @@
 using AutoMapper;
 using ItPlanetAPI.Dtos;
 using ItPlanetAPI.Middleware;
+using ItPlanetAPI.Middleware.ValidationAttributes;
 using ItPlanetAPI.Models;
 using ItPlanetAPI.Requests;
 using Microsoft.AspNetCore.Authorization;
@@ -35,10 +36,8 @@ public class AccountsController : BaseEntityController
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> Get(int id)
+    public async Task<IActionResult> Get([Positive] int id)
     {
-        if (id <= 0) return BadRequest("Id must be positive");
-
         var accountSearchedFor = await _context.Accounts.FirstOrDefaultAsync(user => user.Id == id);
 
         return accountSearchedFor switch
@@ -51,15 +50,16 @@ public class AccountsController : BaseEntityController
     [HttpPut("{id:int}")]
     [Authorize]
     [ServiceFilter(typeof(AuthorizedUser))]
-    public async Task<IActionResult> Update(int id, [FromBody] AccountCreationRequest accountCreationRequest,
+    public async Task<IActionResult> Update([Positive] int id,
+        [FromBody] AccountCreationRequest accountCreationRequest,
         [OpenApiParameterIgnore] int authorizedUserId)
     {
-        if (id <= 0) return BadRequest("Id must be positive");
-        if (id != authorizedUserId) return Forbid();
+        var authorizedUser = await _context.Accounts.FirstAsync(user => user.Id == authorizedUserId);
+        if (id != authorizedUserId && authorizedUser.Role != AccountRole.Admin) return Forbid();
 
         var oldAccount = await _context.Accounts.SingleOrDefaultAsync(user => user.Id == id);
         if (oldAccount == null)
-            return Forbid();
+            return authorizedUser.Role == AccountRole.Admin ? NotFound("Account not found") : Forbid();
 
         var emailAlreadyPresent = _context.Accounts.Any(accountToCheck =>
             accountToCheck.Email == accountCreationRequest.Email && accountToCheck.Id != id);
@@ -67,6 +67,7 @@ public class AccountsController : BaseEntityController
 
         _mapper.Map(accountCreationRequest, oldAccount);
 
+        Console.WriteLine($"HOYHOY: updating user with ID {oldAccount.Id}");
         await _context.SaveChangesAsync();
         return Ok(_mapper.Map<AccountDto>(oldAccount));
     }
@@ -74,6 +75,13 @@ public class AccountsController : BaseEntityController
     [HttpPost]
     [Route("/Registration")]
     [AllowAnonymousOnly]
+    public async Task<IActionResult> Register([FromBody] AccountRegistrationRequest accountRegistrationRequest)
+    {
+        return await Create(_mapper.Map<AccountCreationRequest>(accountRegistrationRequest));
+    }
+
+    [HttpPost]
+    [Authorize(Roles = nameof(AccountRole.Admin))]
     public async Task<IActionResult> Create([FromBody] AccountCreationRequest accountCreationRequest)
     {
         var emailAlreadyPresent =
@@ -82,6 +90,7 @@ public class AccountsController : BaseEntityController
 
         var account = _mapper.Map<Account>(accountCreationRequest);
         _context.Accounts.Add(account);
+
         await _context.SaveChangesAsync();
 
         return new ObjectResult(_mapper.Map<AccountDto>(account)) {StatusCode = StatusCodes.Status201Created};
@@ -90,17 +99,17 @@ public class AccountsController : BaseEntityController
     [HttpDelete("{id:int}")]
     [Authorize]
     [ServiceFilter(typeof(AuthorizedUser))]
-    public async Task<IActionResult> Delete(int id,
+    public async Task<IActionResult> Delete([Positive] int id,
         [OpenApiParameterIgnore] int authorizedUserId)
     {
-        if (id <= 0) return BadRequest("Id must be positive");
-        if (id != authorizedUserId) return Forbid();
+        var authorizedUser = await _context.Accounts.FirstAsync(user => user.Id == authorizedUserId);
+        if (id != authorizedUserId && authorizedUser.Role != AccountRole.Admin) return Forbid();
 
         var accountToRemove =
             await _context.Accounts.Include(account => account.ChippedAnimals)
                 .SingleOrDefaultAsync(account => account.Id == id);
         if (accountToRemove == null)
-            return Forbid();
+            return authorizedUser.Role == AccountRole.Admin ? NotFound("Account not found") : Forbid();
 
         var connectedToAnimals = accountToRemove.ChippedAnimals.Any();
         if (connectedToAnimals) return BadRequest("Animal connected with this account is present");

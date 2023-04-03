@@ -1,6 +1,7 @@
 using AutoMapper;
 using ItPlanetAPI.Dtos;
 using ItPlanetAPI.Extensions;
+using ItPlanetAPI.Middleware.ValidationAttributes;
 using ItPlanetAPI.Models;
 using ItPlanetAPI.Relationships;
 using ItPlanetAPI.Requests;
@@ -19,11 +20,8 @@ public class AnimalLocationsController : BaseEntityController
     }
 
     [HttpGet("")]
-    public async Task<IActionResult> Get(long animalId, [FromQuery] AnimalLocationSearchRequest request)
+    public async Task<IActionResult> Get([Positive] long animalId, [FromQuery] AnimalLocationSearchRequest request)
     {
-        if (animalId <= 0)
-            return BadRequest("Id must be positive");
-
         var animal = await _context.Animals
             .Include(animal => animal.VisitedLocations)
             .FirstOrDefaultAsync(animal => animal.Id == animalId);
@@ -41,11 +39,8 @@ public class AnimalLocationsController : BaseEntityController
 
     [HttpPost("{pointId:long}")]
     [Authorize]
-    public async Task<IActionResult> Create(long animalId, long pointId)
+    public async Task<IActionResult> Create([Positive] long animalId, [Positive] long pointId)
     {
-        if (pointId <= 0 || animalId <= 0)
-            return BadRequest("Id must be positive");
-
         var animal = await _context.Animals
             .Include(animal => animal.VisitedLocations)
             .FirstOrDefaultAsync(animal => animal.Id == animalId);
@@ -76,11 +71,8 @@ public class AnimalLocationsController : BaseEntityController
 
     [HttpPut("")]
     [Authorize]
-    public async Task<IActionResult> Update([FromBody] AnimalLocationUpdateRequest request, long animalId)
+    public async Task<IActionResult> Update([FromBody] AnimalLocationUpdateRequest request, [Positive] long animalId)
     {
-        if (animalId <= 0)
-            return BadRequest("Id must be positive");
-
         var animal = await _context.Animals
             .Include(animal => animal.VisitedLocations)
             .Include(animal => animal.ChippingLocation)
@@ -117,11 +109,8 @@ public class AnimalLocationsController : BaseEntityController
 
     [HttpDelete("{visitedPointId:long}")]
     [Authorize]
-    public async Task<IActionResult> Delete(long animalId, long visitedPointId)
+    public async Task<IActionResult> Delete([Positive] long animalId, [Positive] long visitedPointId)
     {
-        if (animalId <= 0 || visitedPointId <= 0)
-            return BadRequest("Id must be positive");
-
         var animal = await _context.Animals
             .Include(animal => animal.VisitedLocations)
             .Include(animal => animal.ChippingLocation)

@@ -50,7 +50,15 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
             ? Environment.GetEnvironmentVariable("DEFAULT_CONNECTION_STRING")!
             : Environment.GetEnvironmentVariable("CONNECTION_STRING")!;
         using var ctx = new DatabaseContext(options.UseNpgsql(connectionString).Options);
-        ctx.Database.EnsureCreated();
+        // TODO: fix errors causing concurrent access problems instead of ignoring them
+        try
+        {
+            ctx.Database.EnsureCreated();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Error with first database initialization. Perhaps a concurrency problem?");
+        }
 
         // Use to easily clear the database:
         //ctx.Database.EnsureDeleted();

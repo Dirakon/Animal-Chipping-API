@@ -1,5 +1,6 @@
 using AutoMapper;
 using ItPlanetAPI.Dtos;
+using ItPlanetAPI.Middleware.ValidationAttributes;
 using ItPlanetAPI.Models;
 using ItPlanetAPI.Requests;
 using Microsoft.AspNetCore.Authorization;
@@ -49,10 +50,8 @@ public class AnimalsController : BaseEntityController
 
 
     [HttpGet("{id:long}")]
-    public async Task<IActionResult> Get(long id)
+    public async Task<IActionResult> Get([Positive] long id)
     {
-        if (id <= 0) return BadRequest("Id must be positive");
-
         var animalSearchedFor = await _context.Animals
             .Include(animal => animal.AnimalTypes)
             .Include(animal => animal.VisitedLocations)
@@ -67,10 +66,8 @@ public class AnimalsController : BaseEntityController
 
     [HttpPut("{id:long}")]
     [Authorize]
-    public async Task<IActionResult> Update(long id, [FromBody] AnimalUpdateRequest animalRequest)
+    public async Task<IActionResult> Update([Positive] long id, [FromBody] AnimalUpdateRequest animalRequest)
     {
-        if (id <= 0) return BadRequest("Id must be positive");
-
         var oldAnimal =
             await _context.Animals
                 .Include(animal => animal.AnimalTypes)
@@ -106,11 +103,8 @@ public class AnimalsController : BaseEntityController
 
     [HttpDelete("{animalId:long}")]
     [Authorize]
-    public async Task<IActionResult> Delete(long animalId)
+    public async Task<IActionResult> Delete([Positive] long animalId)
     {
-        if (animalId <= 0)
-            return BadRequest("Id must be positive");
-
         var animal = await _context.Animals
             .Include(animal => animal.AnimalTypes)
             .Include(animal => animal.VisitedLocations)

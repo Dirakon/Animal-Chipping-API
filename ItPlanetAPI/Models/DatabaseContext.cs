@@ -19,22 +19,40 @@ public class DatabaseContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         InitAnimalAndLocationRelationship(modelBuilder);
         InitAnimalAndTypeRelationship(modelBuilder);
         InitAnimalAndAccountRelationship(modelBuilder);
         InitAreaAndAreaPointRelationship(modelBuilder);
-        
+
         modelBuilder.Entity<Account>().HasData(
-            new Account { Id = 1, Role = AccountRole.Admin, Email = "admin@simbirsoft.com", Password = "qwerty123", FirstName = "adminFirstName", LastName = "adminLastName"},
-            new Account { Id = 2, Role = AccountRole.Chipper, Email = "chipper@simbirsoft.com", Password = "qwerty123", FirstName = "chipperFirstName", LastName = "chipperLastName"},
-            new Account { Id = 3, Role = AccountRole.User, Email = "user@simbirsoft.com", Password = "qwerty123", FirstName = "userFirstName", LastName = "userLastName"}
-            );
+            new Account
+            {
+                Id = 1, Role = AccountRole.Admin, Email = "admin@simbirsoft.com", Password = "qwerty123",
+                FirstName = "adminFirstName", LastName = "adminLastName"
+            },
+            new Account
+            {
+                Id = 2, Role = AccountRole.Chipper, Email = "chipper@simbirsoft.com", Password = "qwerty123",
+                FirstName = "chipperFirstName", LastName = "chipperLastName"
+            },
+            new Account
+            {
+                Id = 3, Role = AccountRole.User, Email = "user@simbirsoft.com", Password = "qwerty123",
+                FirstName = "userFirstName", LastName = "userLastName"
+            }
+        );
     }
 
     private static void InitAreaAndAreaPointRelationship(ModelBuilder modelBuilder)
     {
-        
+        modelBuilder.Entity<AreaPoint>()
+            .HasOne(a => a.Area)
+            .WithMany(ao => ao.AreaPoints)
+            .OnDelete(DeleteBehavior.NoAction);
     }
+
     private static void InitAnimalAndLocationRelationship(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AnimalAndLocationRelationship>()

@@ -10,7 +10,7 @@ public class AnimalAndLocationRelationship
     public virtual Animal Animal { get; set; }
     public long LocationPointId { get; set; }
     public virtual Location Location { get; set; }
-    public DateTimeOffset DateTimeOfVisitLocationPoint { get; set; } = DateTimeOffset.Now.AsWholeSeconds();
+    public DateTimeOffset DateTimeOfVisitLocationPoint { get; set; } = DateTimeOffset.Now.AsWholeMilliseconds();
 
     public void ChangeLocationTo(long newLocationId)
     {
