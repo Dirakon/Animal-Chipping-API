@@ -98,12 +98,38 @@ public class AreasController : BaseEntityController
         var area = await _context.Areas.Include(area => area.AreaPoints)
             .SingleOrDefaultAsync(area => area.Id == id);
         if (area == null)
-            return NotFound("Area with this id cannot be fount.");
+            return NotFound("Area with this id cannot be found.");
 
         foreach (var areaPoint in area.AreaPoints) _context.Remove(areaPoint);
         _context.Areas.Remove(area);
 
         await _context.SaveChangesAsync();
         return Ok();
+    }
+
+    [HttpGet("{id:long}/analytics")]
+    [Authorize]
+    public async Task<IActionResult> Analytics([Positive] long id, [FromQuery] DateTimeOffset startDate,
+        [FromQuery] DateTimeOffset endDate)
+    {
+        if (startDate >= endDate)
+            return BadRequest("Start date should be earlier then end date");
+
+        var area = await _context.Areas.Include(area => area.AreaPoints)
+            .SingleOrDefaultAsync(area => area.Id == id);
+        if (area == null)
+            return NotFound("Area with this id cannot be found.");
+
+        var animals = await _context.Animals
+            .Include(animal => animal.AnimalTypes)
+            .ThenInclude(typeRelationship => typeRelationship.Type)
+            .Include(animal => animal.ChippingLocation)
+            .Include(animal => animal.VisitedLocations)
+            .ThenInclude(locationRelationship => locationRelationship.Location)
+            .ToListAsync();
+        AreaAnalytics analytics = new(area, startDate, endDate);
+        foreach (var animal in animals) analytics.AnalyzeAnimalMovements(animal);
+
+        return Ok(_mapper.Map<AreaAnalyticsDto>(analytics));
     }
 }

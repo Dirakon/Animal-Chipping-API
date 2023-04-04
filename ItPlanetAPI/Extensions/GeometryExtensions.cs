@@ -26,6 +26,16 @@ public static class GeometryExtensions
         if (!firstPoint.EpsilonEqual(previousPoint, 0.0001)) yield return new Segment2d(previousPoint, firstPoint);
     }
 
+    public static bool Includes(this Segment2d segment2d, Vector2d somePoint)
+    {
+        if (segment2d.P0.EpsilonEqual(somePoint, 0.0001) || segment2d.P1.EpsilonEqual(somePoint, 0.0001))
+            return true;
+        var dirToP0 = (segment2d.P0 - somePoint).Normalized;
+        var dirToP1 = (segment2d.P1 - somePoint).Normalized;
+        var pointBetweenThem = dirToP0.EpsilonEqual(-dirToP1, 0.0001);
+        return pointBetweenThem;
+    }
+
     public static bool ClosedShapeSelfIntersects(this IEnumerable<Segment2d> segments)
     {
         var segment2ds = segments as Segment2d[] ?? segments.ToArray();

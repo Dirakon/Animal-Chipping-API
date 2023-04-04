@@ -34,6 +34,16 @@ public class Area
         return AsPolygon().Contains(spatial.AsVector());
     }
 
+    public bool ContainsOrOnBoundary(ISpatial spatial)
+    {
+        return Contains(spatial) || OnBoundary(spatial);
+    }
+
+    public bool OnBoundary(ISpatial spatial)
+    {
+        return AsSegments().Any(segment => segment.Includes(spatial.AsVector()));
+    }
+
     public bool IntersectsWith(Area otherArea)
     {
         return AsPolygon().IntersectsNonBoundaryWise(otherArea.AsPolygon());

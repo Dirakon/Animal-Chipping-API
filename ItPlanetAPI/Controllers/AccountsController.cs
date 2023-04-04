@@ -67,7 +67,6 @@ public class AccountsController : BaseEntityController
 
         _mapper.Map(accountCreationRequest, oldAccount);
 
-        Console.WriteLine($"HOYHOY: updating user with ID {oldAccount.Id}");
         await _context.SaveChangesAsync();
         return Ok(_mapper.Map<AccountDto>(oldAccount));
     }

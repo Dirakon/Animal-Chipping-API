@@ -1,4 +1,5 @@
 using AutoMapper;
+using ItPlanetAPI.Controllers;
 using ItPlanetAPI.Dtos;
 using ItPlanetAPI.Models;
 using ItPlanetAPI.Relationships;
@@ -54,5 +55,19 @@ public class MappingProfile : Profile
         // Area point creation request -> area point -> area point DTO
         CreateMap<AreaPointCreationRequest, AreaPoint>();
         CreateMap<AreaPoint, AreaPointDto>();
+
+        // Area analytics -> area analytics DTO
+        CreateMap<AreaAnalytics, AreaAnalyticsDto>()
+            .ForSourceMember(analytics => analytics.TypeIdToTypeAnalytics, options => options.DoNotValidate())
+            .ForMember(analyticsDto => analyticsDto.AnimalsAnalytics, options =>
+                options.MapFrom(analytics =>
+                    analytics.TypeIdToTypeAnalytics
+                        .Values
+                        .Where(typeAnalytics =>
+                            typeAnalytics.AnimalsArrived + typeAnalytics.AnimalsGone + typeAnalytics.QuantityAnimals >
+                            0)
+                        .ToList()
+                )
+            );
     }
 }
