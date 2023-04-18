@@ -46,7 +46,7 @@ public class Area
 
     public bool IntersectsWith(Area otherArea)
     {
-        return AsPolygon().IntersectsNonBoundaryWise(otherArea.AsPolygon());
+        return AsPolygon().ContainsSomeOf(otherArea.AsPolygon());
     }
 
 

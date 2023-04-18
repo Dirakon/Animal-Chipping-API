@@ -87,3 +87,7 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
                    : 0);
     }
 }
+
+// 'ZTZxN2IwM3lod25i'
+
+// 'B3g2aBXLFOlCJkHR7tE0KQ=='

@@ -26,9 +26,9 @@ internal class AreaAnalytics
             .Prepend((DateTimeOffset.MinValue, animal.ChippingLocation))
             .TakeWhile(visitTimeAndLocation => visitTimeAndLocation.Item1 <= _endDate);
 
-        bool arrivedToArea = false, previouslyInsideArea = false, leftArea = false, wasInsideAreaInTimeframe = false;
+        bool arrivedToArea = false, previouslyInsideArea = false, leftArea = false;
         foreach (var (visitTime, location) in visitTimesAndLocations)
-            (arrivedToArea, previouslyInsideArea, leftArea, wasInsideAreaInTimeframe) = (
+            (arrivedToArea, previouslyInsideArea, leftArea) = (
                     currentlyInsideArea: _area.ContainsOrOnBoundary(location),
                     arrivedInsideTimeFrame: visitTime >= _startDate) switch
                 {
@@ -36,34 +36,27 @@ internal class AreaAnalytics
                     (
                         arrivedToArea: true,
                         previouslyInsideArea: true,
-                        leftArea,
-                        wasInsideAreaInTimeframe: true
+                        leftArea
                     ),
                     (currentlyInsideArea: false, arrivedInsideTimeFrame: true) when previouslyInsideArea =>
                     (
                         arrivedToArea,
                         previouslyInsideArea: false,
-                        leftArea: true,
-                        wasInsideAreaInTimeframe: true
+                        leftArea: true
                     ),
                     (var currentlyInsideArea, arrivedInsideTimeFrame: true) =>
                     (
                         arrivedToArea,
                         previouslyInsideArea: currentlyInsideArea,
-                        leftArea,
-                        wasInsideAreaInTimeframe: wasInsideAreaInTimeframe || currentlyInsideArea
+                        leftArea
                     ),
                     (var currentlyInsideArea, arrivedInsideTimeFrame: false) =>
                     (
                         arrivedToArea,
                         previouslyInsideArea: currentlyInsideArea,
-                        leftArea,
-                        wasInsideAreaInTimeframe
+                        leftArea
                     )
                 };
-        var endDateForAnimal = animal.DeathDateTime ?? _endDate;
-        if (previouslyInsideArea && endDateForAnimal >= _startDate)
-            wasInsideAreaInTimeframe = true;
 
         var typeIdsAndNames =
             animal.AnimalTypes.Select(typeRelationship => (typeRelationship.TypeId, typeRelationship.Type.Type));

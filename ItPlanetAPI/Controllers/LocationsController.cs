@@ -30,6 +30,60 @@ public class LocationsController : BaseEntityController
         };
     }
 
+    [HttpGet("")]
+    public async Task<IActionResult> GetId([FromQuery] LocationSearchRequest locationSearchRequest)
+    {
+        var locationSearchedFor =
+            await _context.Locations.FirstOrDefaultAsync(ISpatialExtensions.IsAlmostTheSameAs(locationSearchRequest)) as
+                Location;
+
+        return locationSearchedFor switch
+        {
+            { } location => Ok(location.Id),
+            null => NotFound("Location with this id is not found")
+        };
+    }
+
+    [HttpGet("geohash")]
+    public async Task<IActionResult> GeoHashV1([FromQuery] LocationSearchRequest locationSearchRequest)
+    {
+        var locationSearchedFor =
+            await _context.Locations.FirstOrDefaultAsync(ISpatialExtensions.IsAlmostTheSameAs(locationSearchRequest));
+
+        return locationSearchedFor switch
+        {
+            { } location => Ok(location.HashedV1()),
+            null => NotFound("Location with this id is not found")
+        };
+    }
+
+    [HttpGet("geohashv2")]
+    public async Task<IActionResult> GeoHashV2([FromQuery] LocationSearchRequest locationSearchRequest)
+    {
+        var locationSearchedFor =
+            await _context.Locations.FirstOrDefaultAsync(ISpatialExtensions.IsAlmostTheSameAs(locationSearchRequest));
+
+        return locationSearchedFor switch
+        {
+            { } location => Ok(location.HashedV2()),
+            null => NotFound("Location with this id is not found")
+        };
+    }
+
+    [HttpGet("geohashv3")]
+    public async Task<IActionResult> GeoHashV3([FromQuery] LocationSearchRequest locationSearchRequest)
+    {
+        var locationSearchedFor =
+            await _context.Locations.FirstOrDefaultAsync(ISpatialExtensions.IsAlmostTheSameAs(locationSearchRequest));
+
+        return locationSearchedFor switch
+        {
+            { } location => Ok(location.HashedV3()),
+            null => NotFound("Location with this id is not found")
+        };
+    }
+
+
     [HttpPut("{id:long}")]
     [Authorize]
     public async Task<IActionResult> Update([Positive] long id, [FromBody] LocationRequest locationRequest)

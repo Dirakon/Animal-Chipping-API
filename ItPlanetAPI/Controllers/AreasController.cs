@@ -67,7 +67,7 @@ public class AreasController : BaseEntityController
                                                 thisAreaPoint.IsAlmostTheSameAs(otherAreaPoint)))))
             return Conflict("Area with the same points has been found");
 
-        if (otherAreas.FirstOrDefault(otherArea => otherArea.AsPolygon().IntersectsNonBoundaryWise(newAreaPolygon)) is
+        if (otherAreas.FirstOrDefault(otherArea => otherArea.AsPolygon().ContainsSomeOf(newAreaPolygon)) is
             { } someArea)
             return BadRequest($"The area intersects with another existing area (id: {someArea.Id})");
 
