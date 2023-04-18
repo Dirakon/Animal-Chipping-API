@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Security.Cryptography;
 using System.Text;
 using ItPlanetAPI.Extensions;
 using NetTopologySuite.Geometries;
@@ -107,6 +108,9 @@ public static class ISpatialExtensions
 
     public static string HashedV3(this ISpatial spatial)
     {
-        return spatial.HashedV2();
+        var hashV1 = spatial.HashedV1();
+        var md = MD5.Create();
+        var reversedMd5 = md.ComputeHash(Encoding.UTF8.GetBytes(hashV1)).Reverse().ToArray();
+        return Convert.ToBase64String(reversedMd5);
     }
 }

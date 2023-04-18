@@ -21,14 +21,14 @@ public class Area
 
     public Polygon AsPolygon()
     {
-        return _polygonRepresentation ??= AreaPoints.AsPolygon();
+        return _polygonRepresentation ??= AreaPoints.Append(AreaPoints.First()).AsPolygon();
     }
 
     public IEnumerable<LineSegment> AsSegments()
     {
         var shell = AsPolygon().Shell;
         var previousPoint = shell.StartPoint.Coordinate;
-        for (int pointIndex = 1; pointIndex < shell.NumPoints; ++pointIndex)
+        for (var pointIndex = 1; pointIndex < shell.NumPoints; ++pointIndex)
         {
             var newPoint = shell.GetPointN(pointIndex).Coordinate;
             yield return new LineSegment(previousPoint, newPoint);
@@ -45,7 +45,7 @@ public class Area
     {
         return AsPolygon().Covers(new Point(spatial.AsCoordinate()));
     }
-    
+
 
     public bool IntersectsWith(Area otherArea)
     {

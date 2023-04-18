@@ -1,9 +1,6 @@
-using System.Numerics;
 using ItPlanetAPI.Models;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Mathematics;
-using NetTopologySuite.Triangulate;
-using ISpatial = ItPlanetAPI.Models.ISpatial;
 
 namespace ItPlanetAPI.Extensions;
 
@@ -32,7 +29,7 @@ public static class GeometryExtensions
             yield return new LineSegment(previousPoint, firstPoint);
     }
 
-    
+
     public static bool Includes(this LineSegment segment2d, Coordinate somePoint)
     {
         if (segment2d.P0.Equals2D(somePoint, StandardGeometryEpsilon) ||
@@ -48,14 +45,17 @@ public static class GeometryExtensions
     {
         return (new Vector2D(coordinate2) - new Vector2D(coordinate1)).Normalize();
     }
+
     public static Vector2D Direction(this LineSegment segment)
     {
         return segment.P1.DirectionTo(segment.P0);
     }
+
     public static bool EpsilonEquals(this Vector2D vector1, Vector2D vector2, double epsilon = StandardGeometryEpsilon)
     {
         return vector1.Distance(vector2) <= epsilon;
     }
+
     public static bool ClosedShapeSelfIntersects(this IEnumerable<LineSegment> segments)
     {
         var segment2ds = segments as LineSegment[] ?? segments.ToArray();
@@ -76,7 +76,7 @@ public static class GeometryExtensions
                 if (seg1Index == 0 && seg2Index == segment2ds.Length - 1)
                 {
                     // If the first segment goes into the last one
-                    if (seg2.Direction().EpsilonEquals(-seg1.Direction(), StandardGeometryEpsilon))
+                    if (seg2.Direction().EpsilonEquals(-seg1.Direction()))
                         return true;
                     continue;
                 }
@@ -88,109 +88,25 @@ public static class GeometryExtensions
 
         return false;
     }
-    // public record ByDistanceFromPoint(Vector2d OriginPoint) : IComparer<Vector2d>
-    // {
-    //     public int Compare(Vector2d point1, Vector2d point2)
-    //     {
-    //         return point1.EpsilonEqual(point2, StandardGeometryEpsilon) ? 0 
-    //             : Comparer<double>.Default.Compare(OriginPoint.Distance(point1), OriginPoint.Distance(point2));
-    //     }
-    // }
 
     public static bool ContainsSomeOf(this Polygon polygon1, Polygon polygon2)
     {
-        var intersectionShape = polygon1.Intersection(polygon2);
-        return !intersectionShape.IsEmpty && intersectionShape.Dimension == Dimension.Surface;
+        return polygon1.Overlaps(polygon2) || polygon1.Covers(polygon2) || polygon2.Covers(polygon1);
+
+        // Alternative version:
+        // var intersectionShape = polygon1.Intersection(polygon2);
+        // return !intersectionShape.IsEmpty && intersectionShape.Dimension == Dimension.Surface;
+        // TODO: test which one is more performant
     }
 
-    // public static bool IntersectsNonBoundaryWise(this Polygon2d polygon1, Polygon2d polygon2)
-    // {
-    //     if (!polygon1.GetBounds().Intersects(polygon2.GetBounds()))
-    //         return false;
-    //     foreach (var seg1 in polygon1.SegmentItr())
-    //     {
-    //         SortedSet<Vector2d> segmentPointsSplitByIntersections = new(new ByDistanceFromPoint(seg1.P0))
-    //         {
-    //             seg1.P0,
-    //             seg1.P1
-    //         };
-    //         foreach (var seg2 in polygon2.SegmentItr())
-    //         {
-    //             if (!seg1.Intersects(seg2)) continue;
-    //             if (seg1.AsLine().IntersectionPointTotal(seg2.AsLine()) is { } someValidIntersectionPoint)
-    //             {
-    //                 segmentPointsSplitByIntersections.Add(someValidIntersectionPoint);
-    //             }
-    //         }
-    //
-    //         List<Vector2d> splitSegmentCenters = new(segmentPointsSplitByIntersections.Count - 1);
-    //         Vector2d previousPoint = segmentPointsSplitByIntersections.First();
-    //         foreach (var nextPoint in segmentPointsSplitByIntersections.Skip(1))
-    //         {
-    //             splitSegmentCenters.Add((nextPoint + previousPoint)/2);
-    //
-    //             previousPoint = nextPoint;
-    //         }
-    //
-    //         foreach (var splitSegmentCenter in splitSegmentCenters)
-    //         {
-    //             if (polygon2.SegmentItr().Any(segment => segment.Includes(splitSegmentCenter)))
-    //                 continue;
-    //             if (polygon2.Contains(splitSegmentCenter))
-    //                 return true;
-    //         }
-    //
-    //         // RelativePosition? polygon2PointsRelativeToPolygon1 = null;
-    //         // foreach (var seg2 in polygon2.SegmentItr())
-    //         // {
-    //         //     if (!seg1.Intersects(seg2)) continue;
-    //         //
-    //         //     // TODO: fix overlooked problem when two segments one by one go through the polygon bounds
-    //         //     // by intersecting "boundary-wise" from different sides
-    //         //     var relativePositionOfPoints = new[] {seg2.P0, seg2.P1}
-    //         //         .Select(seg2Point => seg1.RelativePositionOf(seg2Point))
-    //         //         .ToArray();
-    //         //     bool isToLeftSide = relativePositionOfPoints.Contains(RelativePosition.ToLeftOfSegment);
-    //         //     bool isToRightSide = relativePositionOfPoints.Contains(RelativePosition.ToRightOfSegment);
-    //         //     bool isOneTheLineOutside = relativePositionOfPoints.Contains(RelativePosition.OutsideOnTheLine);
-    //         //
-    //         //     switch (isToLeftSide,isToRightSide)
-    //         //     {
-    //         //         case (true,true):
-    //         //             // Seg2 goes straight through seg1
-    //         //             return true;
-    //         //         
-    //         //         case (true,false) when polygon2PointsRelativeToPolygon1 != null && polygon2PointsRelativeToPolygon1!= RelativePosition.ToLeftOfSegment:
-    //         //             //
-    //         //             return true;
-    //         //         case (true,false):
-    //         //             polygon2PointsRelativeToPolygon1 = RelativePosition.ToLeftOfSegment;
-    //         //             break;
-    //         //         
-    //         //         case (false,true) when polygon2PointsRelativeToPolygon1 != null && polygon2PointsRelativeToPolygon1 != RelativePosition.ToRightOfSegment:
-    //         //             return true;
-    //         //         case (false,true):
-    //         //             polygon2PointsRelativeToPolygon1 = RelativePosition.ToRightOfSegment;
-    //         //             break;
-    //         //         
-    //         //         case (false,false):
-    //         //             continue;
-    //         //     }
-    //         // }
-    //     }
-    //
-    //     return false;
-    // }
-
+    /**
+     * Transforms an IEnumerable of Spatial into a polygon.
+     * Note that the original Spatial list should be closed (i.e. the first and the last items should be identical)
+     */
     public static Polygon AsPolygon(this IEnumerable<ISpatial> points)
     {
         return new Polygon(new LinearRing(points.Select(point => point.AsCoordinate()).ToArray()));
     }
-
-    // public static bool EpsilonEqual(this Segment2d seg1, Segment2d seg2, double epsilon)
-    // {
-    //     return seg1.P0.EpsilonEqual(seg2.P0, epsilon) && seg1.P1.EpsilonEqual(seg2.P1, epsilon);
-    // }
 
     public static bool AreOnOneLine(this IEnumerable<Coordinate> points)
     {
@@ -205,7 +121,7 @@ public static class GeometryExtensions
         while (enumerator.MoveNext())
         {
             var somePoint = enumerator.Current;
-            if (firstPoint.Equals2D(somePoint,StandardGeometryEpsilon))
+            if (firstPoint.Equals2D(somePoint, StandardGeometryEpsilon))
                 continue;
             var direction = somePoint.DirectionTo(firstPoint);
             if (firstNonZeroDirection is { } firstDirection)

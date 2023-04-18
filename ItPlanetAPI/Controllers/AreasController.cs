@@ -55,7 +55,10 @@ public class AreasController : BaseEntityController
     private IActionResult? FindProblemWithNewAreaAddition(AreaRequest areaToPotentiallyAdd, List<Area> otherAreas)
     {
         var newAreaPoints = areaToPotentiallyAdd.AreaPoints;
-        var newAreaPolygon = newAreaPoints.AsPolygon();
+        var newAreaPolygon = newAreaPoints.Append(newAreaPoints.First()).AsPolygon();
+
+        if (!newAreaPolygon.IsValid)
+            return BadRequest("Topologically invalid, according to the OGC SFS specification");
 
         if (otherAreas.Any(otherArea => otherArea.Name == areaToPotentiallyAdd.Name))
             return Conflict("Area with this name already exists");
