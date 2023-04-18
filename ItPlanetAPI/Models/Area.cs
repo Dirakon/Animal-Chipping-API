@@ -1,13 +1,13 @@
 using AutoMapper;
-using g3;
 using ItPlanetAPI.Extensions;
 using ItPlanetAPI.Requests;
+using NetTopologySuite.Geometries;
 
 namespace ItPlanetAPI.Models;
 
 public class Area
 {
-    private Polygon2d? _polygonRepresentation;
+    private Polygon? _polygonRepresentation;
 
     public Area()
     {
@@ -19,30 +19,33 @@ public class Area
 
     public virtual ICollection<AreaPoint> AreaPoints { get; set; }
 
-    public Polygon2d AsPolygon()
+    public Polygon AsPolygon()
     {
         return _polygonRepresentation ??= AreaPoints.AsPolygon();
     }
 
-    public IEnumerable<Segment2d> AsSegments()
+    public IEnumerable<LineSegment> AsSegments()
     {
-        return AsPolygon().SegmentItr();
+        var shell = AsPolygon().Shell;
+        var previousPoint = shell.StartPoint.Coordinate;
+        for (int pointIndex = 1; pointIndex < shell.NumPoints; ++pointIndex)
+        {
+            var newPoint = shell.GetPointN(pointIndex).Coordinate;
+            yield return new LineSegment(previousPoint, newPoint);
+            previousPoint = newPoint;
+        }
     }
 
     public bool Contains(ISpatial spatial)
     {
-        return AsPolygon().Contains(spatial.AsVector());
+        return AsPolygon().Contains(new Point(spatial.AsCoordinate()));
     }
 
     public bool ContainsOrOnBoundary(ISpatial spatial)
     {
-        return Contains(spatial) || OnBoundary(spatial);
+        return AsPolygon().Covers(new Point(spatial.AsCoordinate()));
     }
-
-    public bool OnBoundary(ISpatial spatial)
-    {
-        return AsSegments().Any(segment => segment.Includes(spatial.AsVector()));
-    }
+    
 
     public bool IntersectsWith(Area otherArea)
     {

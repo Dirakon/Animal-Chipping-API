@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
 using System.Text;
-using g3;
 using ItPlanetAPI.Extensions;
+using NetTopologySuite.Geometries;
 
 namespace ItPlanetAPI.Models;
 
@@ -12,9 +12,9 @@ public static class ISpatialExtensions
         return IsAlmostTheSameAs(second).Compile().Invoke(first);
     }
 
-    public static Vector2d AsVector(this ISpatial spatial)
+    public static Coordinate AsCoordinate(this ISpatial spatial)
     {
-        return new Vector2d(spatial.Latitude, spatial.Longitude);
+        return new Coordinate(spatial.Latitude, spatial.Longitude);
     }
 
 
