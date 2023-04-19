@@ -1,5 +1,4 @@
 using AutoMapper;
-using ItPlanetAPI.Controllers;
 using ItPlanetAPI.Dtos;
 using ItPlanetAPI.Models;
 using ItPlanetAPI.Relationships;

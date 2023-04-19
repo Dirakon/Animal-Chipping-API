@@ -1,47 +1,41 @@
-using ItPlanetAPI.Extensions;
+using ItPlanetAPI.Extensions.Geometry;
 using NetTopologySuite.Geometries;
 
 namespace ItPlanetTests;
 
 public class PolygonContainsSomeOfTests
 {
-    private Polygon _polygon;
-
-    [SetUp]
-    public void SetupPolygon()
+    /*
+     * Rough shape estimation:
+     * 
+     *  .  __  __
+     *  |\/  \/  \
+     *  |_________\
+     * 
+     */
+    private readonly Polygon _polygon = new(new LinearRing(new Coordinate[]
     {
-        /*
-         * Rough shape estimation:
-         * 
-         *  .  __  __
-         *  |\/  \/  \
-         *  |_________\
-         * 
-         */
-        _polygon = new Polygon(new LinearRing(new Coordinate[]
-        {
-            new(0, 0),
-            new(0, 10),
-            new(5, 5),
-            new(10, 10),
-            new(20, 10),
-            new(25, 5),
-            new(30, 10),
-            new(40, 10),
-            new(45, 5),
-            new(50, 0),
-            new(0, 0)
-        }));
-    }
+        new(0, 0),
+        new(0, 10),
+        new(5, 5),
+        new(10, 10),
+        new(20, 10),
+        new(25, 5),
+        new(30, 10),
+        new(40, 10),
+        new(45, 5),
+        new(50, 0),
+        new(0, 0)
+    }));
 
     [Test]
-    public void ContainsSomeOfItself()
+    public void PositiveOnItself()
     {
         Assert.That(_polygon.ContainsSomeOf(_polygon), Is.True);
     }
 
     [Test]
-    public void ContainsSomeOfPolygonCompletelyInside()
+    public void PositiveOnPolygonCompletelyInside()
     {
         var polygonCompletelyInside = new Polygon(new LinearRing(new Coordinate[]
         {
@@ -55,7 +49,7 @@ public class PolygonContainsSomeOfTests
     }
 
     [Test]
-    public void ContainsSomeOfPolygonInsideSharingBoundaries()
+    public void PositiveOnPolygonInsideSharingBoundaries()
     {
         var polygonInsideSharingBoundaries = new Polygon(new LinearRing(new Coordinate[]
         {
@@ -69,7 +63,7 @@ public class PolygonContainsSomeOfTests
     }
 
     [Test]
-    public void ContainsSomeOfPolygonPartiallyInside()
+    public void PositiveOnPolygonPartiallyInside()
     {
         var polygonInsidePartially = new Polygon(new LinearRing(new Coordinate[]
         {
@@ -83,7 +77,7 @@ public class PolygonContainsSomeOfTests
     }
 
     [Test]
-    public void DoesNotContainSomeOfPolygonTouchingBoundaries()
+    public void NegativeOnPolygonTouchingBoundaries()
     {
         var polygonTouchingBoundaries = new Polygon(new LinearRing(new Coordinate[]
         {
@@ -97,7 +91,7 @@ public class PolygonContainsSomeOfTests
     }
 
     [Test]
-    public void DoesNotContainSomeOfFarawayPolygon()
+    public void NegativeOnFarawayPolygon()
     {
         var polygonFarAway = new Polygon(new LinearRing(new Coordinate[]
         {
@@ -111,7 +105,7 @@ public class PolygonContainsSomeOfTests
     }
 
     [Test]
-    public void ContainsSomeOfPolygonWithTwoOverlappingAreas()
+    public void PositiveOnPolygonWithTwoOverlappingAreas()
     {
         var polygonOverlappingTwice = new Polygon(new LinearRing(new Coordinate[]
         {
@@ -126,5 +120,19 @@ public class PolygonContainsSomeOfTests
             new(0, 10)
         }));
         Assert.That(_polygon.ContainsSomeOf(polygonOverlappingTwice), Is.True);
+    }
+
+    [Test]
+    public void NegativeOnPolygonTouchingBoundariesMultipleTimes()
+    {
+        var polygonTouchingBoundariesMultipleTimes = new Polygon(new LinearRing(new Coordinate[]
+        {
+            new(0, 10),
+            new(100, 10),
+            new(100, 20),
+            new(0, 20),
+            new(0, 10)
+        }));
+        Assert.That(_polygon.ContainsSomeOf(polygonTouchingBoundariesMultipleTimes), Is.False);
     }
 }

@@ -1,5 +1,7 @@
 using AutoMapper;
 using ItPlanetAPI.Dtos;
+using ItPlanetAPI.Extensions;
+using ItPlanetAPI.Extensions.Geometry;
 using ItPlanetAPI.Middleware.ValidationAttributes;
 using ItPlanetAPI.Models;
 using ItPlanetAPI.Requests;
@@ -34,7 +36,7 @@ public class LocationsController : BaseEntityController
     public async Task<IActionResult> GetId([FromQuery] LocationSearchRequest locationSearchRequest)
     {
         var locationSearchedFor =
-            await _context.Locations.FirstOrDefaultAsync(ISpatialExtensions.IsAlmostTheSameAs(locationSearchRequest)) as
+            await _context.Locations.FirstOrDefaultAsync(SpatialExtensions.IsAlmostTheSameAs(locationSearchRequest)) as
                 Location;
 
         return locationSearchedFor switch
@@ -48,12 +50,12 @@ public class LocationsController : BaseEntityController
     public async Task<IActionResult> GeoHashV1([FromQuery] LocationSearchRequest locationSearchRequest)
     {
         var locationSearchedFor =
-            await _context.Locations.FirstOrDefaultAsync(ISpatialExtensions.IsAlmostTheSameAs(locationSearchRequest));
+            await _context.Locations.FirstOrDefaultAsync(SpatialExtensions.IsAlmostTheSameAs(locationSearchRequest));
 
         return locationSearchedFor switch
         {
             { } location => Ok(location.HashedV1()),
-            null => NotFound("Location with this id is not found")
+            null => NotFound("Location at the specified position cannot be found")
         };
     }
 
@@ -61,12 +63,12 @@ public class LocationsController : BaseEntityController
     public async Task<IActionResult> GeoHashV2([FromQuery] LocationSearchRequest locationSearchRequest)
     {
         var locationSearchedFor =
-            await _context.Locations.FirstOrDefaultAsync(ISpatialExtensions.IsAlmostTheSameAs(locationSearchRequest));
+            await _context.Locations.FirstOrDefaultAsync(SpatialExtensions.IsAlmostTheSameAs(locationSearchRequest));
 
         return locationSearchedFor switch
         {
             { } location => Ok(location.HashedV2()),
-            null => NotFound("Location with this id is not found")
+            null => NotFound("Location at the specified position cannot be found")
         };
     }
 
@@ -74,12 +76,12 @@ public class LocationsController : BaseEntityController
     public async Task<IActionResult> GeoHashV3([FromQuery] LocationSearchRequest locationSearchRequest)
     {
         var locationSearchedFor =
-            await _context.Locations.FirstOrDefaultAsync(ISpatialExtensions.IsAlmostTheSameAs(locationSearchRequest));
+            await _context.Locations.FirstOrDefaultAsync(SpatialExtensions.IsAlmostTheSameAs(locationSearchRequest));
 
         return locationSearchedFor switch
         {
             { } location => Ok(location.HashedV3()),
-            null => NotFound("Location with this id is not found")
+            null => NotFound("Location at the specified position cannot be found")
         };
     }
 
@@ -94,7 +96,7 @@ public class LocationsController : BaseEntityController
             return NotFound();
 
         var coordinatesAlreadyPresent =
-            await _context.Locations.AnyAsync(ISpatialExtensions.IsAlmostTheSameAs(locationRequest));
+            await _context.Locations.AnyAsync(SpatialExtensions.IsAlmostTheSameAs(locationRequest));
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 
         _mapper.Map(locationRequest, oldLocation);
@@ -108,7 +110,7 @@ public class LocationsController : BaseEntityController
     public async Task<IActionResult> Create([FromBody] LocationRequest locationRequest)
     {
         var coordinatesAlreadyPresent =
-            await _context.Locations.AnyAsync(ISpatialExtensions.IsAlmostTheSameAs(locationRequest));
+            await _context.Locations.AnyAsync(SpatialExtensions.IsAlmostTheSameAs(locationRequest));
         if (coordinatesAlreadyPresent) return Conflict("Location with these coordinates is already present");
 
         var location = _mapper.Map<Location>(locationRequest);

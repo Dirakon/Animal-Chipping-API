@@ -1,33 +1,11 @@
-using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
-using ItPlanetAPI.Extensions;
-using NetTopologySuite.Geometries;
+using ItPlanetAPI.Models;
 
-namespace ItPlanetAPI.Models;
+namespace ItPlanetAPI.Extensions;
 
-public static class ISpatialExtensions
+public static class GeoHashExtensions
 {
-    public static bool IsAlmostTheSameAs(this ISpatial first, ISpatial second)
-    {
-        return IsAlmostTheSameAs(second).Compile().Invoke(first);
-    }
-
-    public static Coordinate AsCoordinate(this ISpatial spatial)
-    {
-        return new Coordinate(spatial.Latitude, spatial.Longitude);
-    }
-
-
-    public static Expression<Func<ISpatial, bool>> IsAlmostTheSameAs(ISpatial other)
-    {
-        const double epsilon = GeometryExtensions.StandardGeometryEpsilon;
-        return current => other.Latitude - current.Latitude < epsilon &&
-                          -other.Latitude + current.Latitude < epsilon &&
-                          other.Longitude - current.Longitude < epsilon &&
-                          -other.Longitude + current.Longitude < epsilon;
-    }
-
     /**
      * Get standard GeoHash of some coordinates
      * (the implementation is based on https://github.com/Postlagerkarte/geohash-dotnet/blob/master/src/Geohasher.cs)
@@ -106,11 +84,16 @@ public static class ISpatialExtensions
         return Convert.ToBase64String(Encoding.UTF8.GetBytes(hashV1));
     }
 
+    /**
+     * Get the standard GeoHash of coordinates and further encode its reversed MD-5 hash into Base64
+     */
     public static string HashedV3(this ISpatial spatial)
     {
         var hashV1 = spatial.HashedV1();
-        var md = MD5.Create();
-        var reversedMd5 = md.ComputeHash(Encoding.UTF8.GetBytes(hashV1)).Reverse().ToArray();
+        var reversedMd5 = MD5
+            .HashData(Encoding.UTF8.GetBytes(hashV1))
+            .Reverse()
+            .ToArray();
         return Convert.ToBase64String(reversedMd5);
     }
 }

@@ -1,6 +1,6 @@
 using AutoMapper;
 using ItPlanetAPI.Dtos;
-using ItPlanetAPI.Extensions;
+using ItPlanetAPI.Extensions.Geometry;
 using ItPlanetAPI.Middleware.ValidationAttributes;
 using ItPlanetAPI.Models;
 using ItPlanetAPI.Requests;
@@ -58,24 +58,23 @@ public class AreasController : BaseEntityController
         var newAreaPolygon = newAreaPoints.Append(newAreaPoints.First()).AsPolygon();
 
         if (!newAreaPolygon.IsValid)
-            return BadRequest("Topologically invalid, according to the OGC SFS specification");
+            return BadRequest("Topologically invalid area, according to the OGC SFS specification");
 
-        if (otherAreas.Any(otherArea => otherArea.Name == areaToPotentiallyAdd.Name))
-            return Conflict("Area with this name already exists");
+        if (otherAreas.FirstOrDefault(otherArea => otherArea.Name == areaToPotentiallyAdd.Name) is
+            { } areaWithTheSameName)
+            return Conflict($"Area with this name already exists (id: {areaWithTheSameName.Id})");
 
-        // TODO: change logic if BadRequest is expected when the points are the same but in different order
-        if (otherAreas.Any(otherArea => otherArea.AreaPoints.Count == newAreaPoints.Count
-                                        && otherArea.AreaPoints.All(otherAreaPoint =>
-                                            newAreaPoints.Any(thisAreaPoint =>
-                                                thisAreaPoint.IsAlmostTheSameAs(otherAreaPoint)))))
-            return Conflict("Area with the same points has been found");
+        if (otherAreas.FirstOrDefault(otherArea => newAreaPoints.DescribesTheSamePolygonAs(otherArea.AreaPoints)) is
+            { } areaDescribingTheSamePolygon)
+            return Conflict($"Area with the same points has been found (id: {areaDescribingTheSamePolygon.Id})");
 
         if (otherAreas.FirstOrDefault(otherArea => otherArea.AsPolygon().ContainsSomeOf(newAreaPolygon)) is
-            { } someArea)
-            return BadRequest($"The area intersects with another existing area (id: {someArea.Id})");
+            { } intersectingArea)
+            return BadRequest($"The area intersects with another existing area (id: {intersectingArea.Id})");
 
         return null;
     }
+
 
     [HttpPost("")]
     [Authorize(Roles = nameof(AccountRole.Admin))]

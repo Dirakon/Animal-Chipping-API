@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using ItPlanetAPI.Extensions;
+using ItPlanetAPI.Extensions.Geometry;
 using ItPlanetAPI.Middleware.ValidationAttributes;
 using ItPlanetAPI.Models;
 

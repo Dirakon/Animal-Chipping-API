@@ -1,7 +1,6 @@
 using ItPlanetAPI.Dtos;
-using ItPlanetAPI.Models;
 
-namespace ItPlanetAPI.Controllers;
+namespace ItPlanetAPI.Models;
 
 internal class AreaAnalytics
 {

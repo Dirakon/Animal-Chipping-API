@@ -1,5 +1,6 @@
 using AutoMapper;
 using ItPlanetAPI.Extensions;
+using ItPlanetAPI.Extensions.Geometry;
 using ItPlanetAPI.Requests;
 using NetTopologySuite.Geometries;
 
@@ -38,12 +39,12 @@ public class Area
 
     public bool Contains(ISpatial spatial)
     {
-        return AsPolygon().Contains(new Point(spatial.AsCoordinate()));
+        return AsPolygon().Contains(spatial.AsPoint());
     }
 
     public bool ContainsOrOnBoundary(ISpatial spatial)
     {
-        return AsPolygon().Covers(new Point(spatial.AsCoordinate()));
+        return AsPolygon().Covers(spatial.AsPoint());
     }
 
 
