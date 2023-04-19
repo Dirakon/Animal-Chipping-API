@@ -2,34 +2,24 @@ using ItPlanetAPI.Dtos;
 
 namespace ItPlanetAPI.Models;
 
-internal class AreaAnalytics
+public record AreaAnalytics(Area Area, DateTimeOffset StartDate, DateTimeOffset EndDate)
 {
-    private readonly Area _area;
-    private readonly DateTimeOffset _endDate;
-    private readonly DateTimeOffset _startDate;
     public readonly Dictionary<long, AnimalTypeAnalyticsDto> TypeIdToTypeAnalytics = new();
     public long TotalAnimalsArrived, TotalQuantityAnimals, TotalAnimalsGone;
-
-    public AreaAnalytics(Area area, DateTimeOffset startDate, DateTimeOffset endDate)
-    {
-        _area = area;
-        _startDate = startDate;
-        _endDate = endDate;
-    }
 
     public void AnalyzeAnimalMovements(Animal animal)
     {
         var visitTimesAndLocations = animal.VisitedLocations
             .Select(locationRelationship =>
-                (locationRelationship.DateTimeOfVisitLocationPoint, locationRelationship.Location))
-            .Prepend((DateTimeOffset.MinValue, animal.ChippingLocation))
-            .TakeWhile(visitTimeAndLocation => visitTimeAndLocation.Item1 <= _endDate);
+                (visitTime: locationRelationship.DateTimeOfVisitLocationPoint, location: locationRelationship.Location))
+            .Prepend((visitTime: DateTimeOffset.MinValue, location: animal.ChippingLocation))
+            .TakeWhile(visitTimeAndLocation => visitTimeAndLocation.visitTime <= EndDate);
 
         bool arrivedToArea = false, previouslyInsideArea = false, leftArea = false;
         foreach (var (visitTime, location) in visitTimesAndLocations)
             (arrivedToArea, previouslyInsideArea, leftArea) = (
-                    currentlyInsideArea: _area.ContainsOrOnBoundary(location),
-                    arrivedInsideTimeFrame: visitTime >= _startDate) switch
+                    currentlyInsideArea: Area.ContainsOrOnBoundary(location),
+                    arrivedInsideTimeFrame: visitTime >= StartDate) switch
                 {
                     (currentlyInsideArea: true, arrivedInsideTimeFrame: true) when !previouslyInsideArea =>
                     (

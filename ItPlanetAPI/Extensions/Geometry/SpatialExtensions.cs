@@ -65,7 +65,7 @@ public static class SpatialExtensions
         if (!firstPoint.Equals2D(previousPoint, MathExtensions.StandardMathEpsilon))
             yield return new LineSegment(previousPoint, firstPoint);
     }
-    
+
     public static bool DescribesTheSamePolygonAs(this IEnumerable<ISpatial> points1Source,
         IEnumerable<ISpatial> points2Source)
     {

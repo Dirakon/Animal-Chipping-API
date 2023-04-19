@@ -1,13 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using ItPlanetAPI.Extensions.Geometry;
 using ItPlanetAPI.Middleware.ValidationAttributes;
-using ItPlanetAPI.Models;
 
 namespace ItPlanetAPI.Requests;
 
 public class AreaRequest : IValidatableObject
 {
     [NonWhitespace] [Required] public string Name { get; set; }
+
     [Required] public List<AreaPointCreationRequest> AreaPoints { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -27,10 +27,4 @@ public class AreaRequest : IValidatableObject
         if (AreaPoints.AsSegments().ClosedShapeSelfIntersects())
             yield return new ValidationResult("'AreaPoints' elements self-intersect");
     }
-}
-
-public class AreaPointCreationRequest : ISpatial
-{
-    [Required] [Range(-180.0, 180.0)] public double Longitude { get; set; }
-    [Required] [Range(-90.0, 90.0)] public double Latitude { get; set; }
 }

@@ -21,15 +21,15 @@ public static class SegmentExtensions
         return segment.P1.DirectionTo(segment.P0);
     }
 
-    public static bool ClosedShapeSelfIntersects(this IEnumerable<LineSegment> segments)
+    public static bool ClosedShapeSelfIntersects(this IEnumerable<LineSegment> segmentsSource)
     {
-        var segment2ds = segments as LineSegment[] ?? segments.ToArray();
-        for (var seg1Index = 0; seg1Index < segment2ds.Length; seg1Index++)
+        var segments = segmentsSource as LineSegment[] ?? segmentsSource.ToArray();
+        for (var seg1Index = 0; seg1Index < segments.Length; seg1Index++)
         {
-            var seg1 = segment2ds[seg1Index];
-            for (var seg2Index = seg1Index + 1; seg2Index < segment2ds.Length; seg2Index++)
+            var seg1 = segments[seg1Index];
+            for (var seg2Index = seg1Index + 1; seg2Index < segments.Length; seg2Index++)
             {
-                var seg2 = segment2ds[seg2Index];
+                var seg2 = segments[seg2Index];
                 if (seg2Index == seg1Index + 1)
                 {
                     // If the next segment goes into the previousOne
@@ -38,7 +38,7 @@ public static class SegmentExtensions
                     continue;
                 }
 
-                if (seg1Index == 0 && seg2Index == segment2ds.Length - 1)
+                if (seg1Index == 0 && seg2Index == segments.Length - 1)
                 {
                     // If the first segment goes into the last one
                     if (seg2.Direction().EpsilonEquals(-seg1.Direction()))
