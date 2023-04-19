@@ -46,22 +46,8 @@ builder.Services.AddSwaggerGen(option =>
 
 builder.Services.AddDbContext<DatabaseContext>(options =>
     {
-        var connectionString = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CONNECTION_STRING"))
-            ? Environment.GetEnvironmentVariable("DEFAULT_CONNECTION_STRING")!
-            : Environment.GetEnvironmentVariable("CONNECTION_STRING")!;
+        var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING")!;
         using var ctx = new DatabaseContext(options.UseNpgsql(connectionString).Options);
-        // TODO: fix errors causing concurrent access problems instead of ignoring them
-        try
-        {
-            ctx.Database.EnsureCreated();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine("Error with first database initialization. Perhaps a concurrency problem?");
-        }
-
-        // Use to easily clear the database:
-        //ctx.Database.EnsureDeleted();
     }
 );
 var app = builder.Build();
@@ -79,5 +65,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+    db.Database.EnsureCreated();
+}
 
 app.Run();
