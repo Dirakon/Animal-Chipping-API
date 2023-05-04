@@ -73,4 +73,20 @@ public static class LinqExtensions
     {
         return enumerable.GroupBy(typeId => typeId).Any(g => g.Count() > 1);
     }
+    public static bool HasDuplicates<T>(this IEnumerable<T> enumerable, Func<T,T,bool> comparatorFunction)
+    {
+        var list = enumerable.ToList();
+        for (var index1 = 0; index1 < list.Count; index1++)
+        {
+            var item1 = list[index1];
+            for (var index2 = index1 + 1; index2 < list.Count; index2++)
+            {
+                var item2 = list[index2];
+                if (comparatorFunction(item1, item2))
+                    return true;
+            }
+        }
+
+        return false;
+    }
 }

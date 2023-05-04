@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using ItPlanetAPI.Extensions;
 using ItPlanetAPI.Extensions.Geometry;
 using ItPlanetAPI.Middleware.ValidationAttributes;
 
@@ -12,13 +13,7 @@ public class AreaRequest : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (AreaPoints
-            .Any(firstAreaPoint =>
-                AreaPoints
-                    .Where(secondAreaPoint => secondAreaPoint != firstAreaPoint)
-                    .Any(secondAreaPoint => secondAreaPoint.IsAlmostTheSameAs(firstAreaPoint))
-            )
-           )
+        if (AreaPoints.HasDuplicates((point1,point2)=>point1.IsAlmostTheSameAs(point2)))
             yield return new ValidationResult("'AreaPoints' contains duplicate elements");
         if (AreaPoints.Count < 3)
             yield return new ValidationResult("'AreaPoints' contains less then 3 elements");

@@ -22,10 +22,10 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        if (!Request.Headers.ContainsKey("Authorization"))
+        if (!Request.Headers.TryGetValue("Authorization", out var authorizationHeader))
             return AuthenticateResult.Fail("Missing Authorization header");
 
-        return ParseAuthorizationHeader(Request.Headers["Authorization"]) switch
+        return ParseAuthorizationHeader(authorizationHeader) switch
         {
             var (email, password) => await TryToAuthorize(email, password),
             null => AuthenticateResult.Fail("Invalid Authorization header")
@@ -50,7 +50,6 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
         return AuthenticateResult.Success(ticket);
     }
 
-    [Pure]
     private static (string email, string password)? ParseAuthorizationHeader(string? authorization)
     {
         if (string.IsNullOrEmpty(authorization) ||
@@ -78,7 +77,6 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
         return (email, password);
     }
 
-    [Pure]
     private static int GetBase64BufferLength(string encodedString)
     {
         return (encodedString.Length * 3 + 3) / 4 -
